@@ -23,7 +23,10 @@ const userSchema = new mongoose.Schema({
     rollNo: {
         type: String,
         unique: true,
-        validate: { validator: v => /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/.test(v) }
+        validate: {
+            validator: v => v === null || /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/.test(v)
+        },
+        default: null
     },
     role: {
         type: String,

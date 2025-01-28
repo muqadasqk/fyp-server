@@ -11,7 +11,7 @@ const signupForm = async (req, res, next) => {
         name: { required: true, string: true, min: 3, max: 50 },
         email: { required: true, email: true, unique: { field: 'email', model: model.USERS }, min: 6, max: 255 },
         nic: { required: true, number: true, unique: { field: 'nic', model: model.USERS }, size: 13 },
-        rollNo: { required: true, unique: { field: 'rollNo', model: model.USERS }, size: 7 },
+        rollNo: { unique: { field: 'rollNo', model: model.USERS }, size: 7 },
         role: { required: true, in: [userRole.SUPERVISOR, userRole.STUDENT] },
         password: { required: true, password: true },
         image: { required: true, extension: ['jpg', 'jpeg', 'png'], filesize: 3072 },
