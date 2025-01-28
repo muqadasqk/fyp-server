@@ -15,9 +15,7 @@ export default Object.freeze({
     },
 
     ACCOUNT: {
-        INACTIVE: 'Account inactive. Please contact support to reactivate',
         NOT_ACTIVE: 'Account not active. Check your login credentials or contact support',
-        NOT_FOUND: 'Account not found. Please check your login credentials',
         INVALID: 'Account not found. You can register for a new account now',
     },
 
@@ -25,7 +23,6 @@ export default Object.freeze({
         SUCCESS: 'Login successful!',
         FAILED: 'Invalid email or password. Please try again',
         ADMIN_FAILED: 'Invalid username or password. Please try again',
-        GRANTED: 'Admin authorization granted',
         GRANTED: 'Admin authorization granted',
     },
 

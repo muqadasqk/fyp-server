@@ -5,7 +5,7 @@
   "description": "This is my finaly year project at department of software engineering of mehran university of engineering and technology",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "nodemon public/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

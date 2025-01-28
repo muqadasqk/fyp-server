@@ -10,7 +10,7 @@ import httpCode from "../utils/constants/http.code.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // 
-const upload = () => multer({
+const upload = multer({
     // set default storage for the files being uploaded
     storage: multer.diskStorage({
 
@@ -32,7 +32,7 @@ const upload = () => multer({
 // method to upload file from cmoning HTTP request
 const save = name => (req, res, next) => tryCatch(() => {
     // upload single file using multer storage object defined above
-    const uploadMiddleware = upload().single(name);
+    const uploadMiddleware = upload.single(name);
 
     // another middleware to check if the file upload was successful
     uploadMiddleware(req, res, (error) => {

@@ -14,6 +14,10 @@ export default Object.freeze({
     size: (value, size) => typeof value === 'string' && value.length === size,
     min: (value, min) => typeof value === 'string' && value.length >= min,
     max: (value, max) => typeof value === 'string' && value.length <= max,
+    word: (value, options) => {
+        const wordCount = value.trim().split(/\s+/).length;
+        return (!options.min || wordCount >= options.min) && (!options.max || wordCount <= options.max);
+    },
 
     filesize: ({ size }, maxSize) => /^[0-9]+(\.[0-9]+)?$/.test(size) && parseFloat(size) <= maxSize,
     extension: ({ extension }, options) => Object.values(options).includes(extension),
@@ -26,12 +30,12 @@ export default Object.freeze({
         if (!options.field) {
             throw new Error('Field is required for unique validation');
         }
-        return !(await existsInDatabase({ value, ...options }));
+        return !await existsInDatabase({ value, ...options });
     },
     exists: async (value, options) => {
         if (!options.field) {
             throw new Error('Field is required to check existence');
         }
-        return !(await existsInDatabase({ value, ...options }));
+        return !!await existsInDatabase({ value, ...options });
     },
 });

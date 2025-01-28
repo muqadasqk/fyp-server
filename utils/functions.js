@@ -14,7 +14,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // function to check existence of a document based on field value query
 export const existsInDatabase = async ({ field, value, model, except }) => await tryCatch(async () => {
-    const query = { [field]: value };
+    const query = { [field]: field === '_id' ? new mongoose.Types.ObjectId(value) : value };
 
     if (except) {
         const key = Object.keys(except)[0];
@@ -25,9 +25,9 @@ export const existsInDatabase = async ({ field, value, model, except }) => await
 });
 
 // function to validate mongoDB ObjectId
-export const validateMongoObjectID = (id, model) => {
+export const validateMongoObjectID = (id) => {
     if (!mongoose.isValidObjectId(id)) {
-        throw new Error(toast.VALIDATION.INVALID_ID(model));
+        throw new Error(toast.VALIDATION.INVALID_ID('mongoose'));
     }
 }
 
@@ -56,7 +56,8 @@ export const tryCatch = async (fn, res = null) => {
     } catch (error) {
         if (res === null) throw error;
 
-        return res.response(httpCode.SERVER_ERROR, toast.MISC.INTERNAL_ERROR, { error: error.message });
+        // return res.response(httpCode.SERVER_ERROR, toast.MISC.INTERNAL_ERROR, { error: error.message });
+        return res.response(httpCode.SERVER_ERROR, error.message);
     }
 };
 

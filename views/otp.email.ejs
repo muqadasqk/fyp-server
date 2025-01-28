@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= data.subject ?? 'Verification' %></title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #ffffff;
+            color: #212121;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #ffffff;
+            }
+            .container {
+                border: 1px solid #28282B !important;
+            }
+        }
+    
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #dbdbdb;
+            border-radius: 10px;
+        }
+        
+        .header {
+            text-align: center;
+        }
+        
+        .content {
+            padding: 25px;
+        }
+        
+        .otp {
+            background-color: #f7f7f7;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 26px;
+            font-weight: bold;
+            color: #212121;
+            text-align: center;
+        }
+    
+        @media (prefers-color-scheme: dark) {
+            .otp {
+                background-color: #1a1a1a;
+                color: #ffffff;
+            }
+        }
+    
+        .footer {
+            padding: 25px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>FYP Management System</h2>
+        </div>
+        <div class="content">
+            <p>Dear <strong><%= data.user %></strong>,</p>
+            <p class="otp"><%= data.otp %></p>
+            <p style="text-align:center;">Please enter this OTP to proceed <%= data.subject ?? 'verification' %></p>
+        </div>
+        <div class="footer">
+            <p>Best regards,</p>
+            <p>FYP Management System</p>
+        </div>
+    </div>
+</body>
+</html>
