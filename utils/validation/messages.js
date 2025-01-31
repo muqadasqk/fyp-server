@@ -6,6 +6,7 @@ export const messages = {
     string: "The :field must contain only letters",
     number: "The :field must contain only digits",
     password: "Password must contain uppercase, lowercase, special character, and digit",
+    regex: 'The :field contains invalid format. Please check your input',
 
     filesize: "The file size must not exceed :filesize MBs",
     mongooseId: "The :field must be a valid moongose ID",
@@ -27,12 +28,12 @@ const validationMessage = (rule, options) => tryCatch(() => {
         .replace(/:field\b/g, str.splitCamelCase(options.field))
         .replace(/:value\b/g, options.value)
         .replace(/:same\b/g, options.same && Object.keys(options.same)[0])
-        .replace(/:min\b/g, (options.min || options[rule].min) ?? '1')
-        .replace(/:max\b/g, (options.max || options[rule].max) ?? 'any range of')
+        .replace(/:min\b/g, options.min || options[rule].min)
+        .replace(/:max\b/g, options.max || options[rule].max)
         .replace(/:minDigit\b/g, options.minDigit)
         .replace(/:maxDigit\b/g, options.maxDigit)
         .replace(/:size\b/g, options.size)
-        .replace(/:filesize\b/g, options.filesize && Math.round(options.filesize / 1024))
+        .replace(/:filesize\b/g, options.filesize && (options.filesize / 1024).toFixed(2))
         .replace(/:extension\b/g, options.extension && options.extension.join(', '))
         .replace(/:in\b/g, options.in && options.in.join(', '));
 });

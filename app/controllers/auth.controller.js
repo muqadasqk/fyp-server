@@ -26,7 +26,7 @@ const signup = (req, res) => tryCatch(async () => {
   if (!user) throw new Error(toast.USER.REGISTRATION_FAILED);
 
   // email options
-  const emailOptions = {
+  const options = {
     template: 'otp.email',
     user: str.capEach(user.name),
     subject: 'Registration email verification',
@@ -34,7 +34,8 @@ const signup = (req, res) => tryCatch(async () => {
   };
 
   // send email with OTP; throw failed to send email error when unsuccessful
-  if (!(await email.send(user.email, emailOptions))) {
+  if (!(await email.send(user.email, options))) {
+    await userService.delete(user._id);
     throw new Error(toast.OTP.FAILED);
   }
 
@@ -76,7 +77,7 @@ const signin = (req, res) => tryCatch(async () => {
   let user = await userService.one({ email: req.body.email });
 
   // return back with access denied response whether user is not found or password is invalid
-  if (!user || !(await password.validate(req.body.password, user.password))) {
+  if (!user || !(await password.compare(req.body.password, user.password))) {
     return res.response(httpCode.ACCESS_DENIED, toast.AUTHENTICATION.FAILED);
   }
 
@@ -107,7 +108,7 @@ const adminSignin = (req, res) => tryCatch(async () => {
   };
 
   // return back with access denied response whether admin username or password is invalid
-  if (admin.username !== req.body.username || !(await password.validate(req.body.password, admin.password))) {
+  if (admin.username !== req.body.username || !(await password.compare(req.body.password, admin.password))) {
     return res.response(httpCode.ACCESS_DENIED, toast.AUTHENTICATION.ADMIN_FAILED);
   }
 
@@ -184,14 +185,14 @@ const sendOTP = (req, res) => tryCatch(async () => {
   const generateOTP = str.generateOTP(6);
 
   // email options
-  const emailOptions = {
+  const options = {
     template: 'otp.email',
     user: str.capEach(user.name),
     otp: generateOTP
   };
 
   // send email with OTP and check if it was sent othwerwise throw failed to send email error
-  if (!(await email.send(user.email, emailOptions))) {
+  if (!(await email.send(user.email, options))) {
     throw new Error(toast.OTP.FAILED);
   }
 

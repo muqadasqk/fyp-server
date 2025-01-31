@@ -6,6 +6,7 @@ export default Object.freeze({
     string: (value) => /^[a-zA-Z\s]+$/.test(value),
     email: (value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value),
     password: (value) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value),
+    regex: (value, pattern) => pattern.test(value),
 
     number: (value) => /^[0-9]+$/.test(value),
     minDigit: (value, min) => /^[0-9]+$/.test(value) && value.length >= min,
@@ -26,16 +27,6 @@ export default Object.freeze({
     in: (value, options) => Object.values(options).includes(value),
 
     mongooseId: (value) => mongoose.isValidObjectId(value),
-    unique: async (value, options) => {
-        if (!options.field) {
-            throw new Error('Field is required for unique validation');
-        }
-        return !await existsInDatabase({ value, ...options });
-    },
-    exists: async (value, options) => {
-        if (!options.field) {
-            throw new Error('Field is required to check existence');
-        }
-        return !!await existsInDatabase({ value, ...options });
-    },
+    unique: async (value, options) => !await existsInDatabase(value, options),
+    exists: async (value, options) => !!await existsInDatabase(value, options),
 });

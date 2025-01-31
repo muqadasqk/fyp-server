@@ -49,7 +49,7 @@ const update = async (query, data) => {
     const updated = await tryCatch(() => user.findOneAndUpdate(query, data, { new: false }));
 
     // delete old image file if there was a new image uploaded
-    if (updated && data.image) {
+    if (updated && updated.image !== 'default.jpg' && data.image) {
         file.delete(updated.image);
     }
 
@@ -59,15 +59,14 @@ const update = async (query, data) => {
 
 // method to delete single specified user document
 const del = async id => {
-    // validate id is proper string
-    input.validate(id, 'string');
+    // validate id is a valid mongoose ID
     validateMongoObjectID(id);
 
     // delete and retrieve deleted user document
     const deleted = await tryCatch(async () => await user.findByIdAndDelete(id));
 
     // delete old image file when user document deletion was successful
-    if (deleted && deleted.image) {
+    if (deleted && update.image !== 'default.jpg' && deleted.image) {
         file.delete(deleted.image)
     }
 

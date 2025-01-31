@@ -12,6 +12,7 @@ app.use(
     express.json(),
     express.urlencoded({ extended: true }),
     application.response, // custom application-level middleware to send organized response
+    application.errorHandler // custom middleware to catch errors occured during the execution of application
 );
 
 // register api routes

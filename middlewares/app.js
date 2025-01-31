@@ -1,4 +1,4 @@
-import { is } from "../utils/functions.js";
+import { is, tryCatch } from "../utils/functions.js";
 
 // middleware to register response method into response object
 const response = (_, res, next) => {
@@ -15,4 +15,13 @@ const response = (_, res, next) => {
     next();
 }
 
-export default { response }
+// middleware to handle errors ocured during the execution of application
+const errorHandler = (error, req, res, next) => tryCatch(() => {
+    throw {
+        message: error.message,
+        errors: error.errors,
+        stack: error.stack,
+    };
+}, res);
+
+export default { response, errorHandler }

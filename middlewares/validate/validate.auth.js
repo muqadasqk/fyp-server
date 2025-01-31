@@ -1,20 +1,20 @@
 import httpCode from "../../utils/constants/http.code.js";
-import model from "../../utils/constants/model.js";
 import toast from "../../utils/constants/toast.js";
 import userRole from "../../utils/constants/user.role.js";
+import { tryCatch } from "../../utils/functions.js";
 import validator from "../../utils/validation/validator.js";
 import file from "../file.js";
 
-const signupForm = async (req, res, next) => {
+const signupForm = (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { validationFailed, errors } = await validator(req.body, {
         name: { required: true, string: true, min: 3, max: 50 },
-        email: { required: true, email: true, unique: { field: 'email', model: model.USERS }, min: 6, max: 255 },
-        nic: { required: true, number: true, unique: { field: 'nic', model: model.USERS }, size: 13 },
-        rollNo: { unique: { field: 'rollNo', model: model.USERS }, size: 7 },
-        role: { required: true, in: [userRole.SUPERVISOR, userRole.STUDENT] },
+        email: { required: true, email: true, unique: { user: 'email' }, min: 6, max: 255 },
+        nic: { required: true, number: true, unique: { user: 'nic' }, size: 13 },
+        rollNo: { unique: { user: 'rollNo' }, size: 7, regex: /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/ },
+        role: { in: [userRole.SUPERVISOR, userRole.STUDENT] },
         password: { required: true, password: true },
-        image: { required: true, extension: ['jpg', 'jpeg', 'png'], filesize: 3072 },
+        image: { required: true, extension: ['jpg', 'jpeg', 'png'], filesize: 3972 },
     });
 
     // delete uploaded image file once validation was failed
@@ -31,10 +31,11 @@ const signupForm = async (req, res, next) => {
     if (req.body.image.name) {
         req.body.image = req.body.image.name
     }
-    next();
-};
 
-const signinForm = async (req, res, next) => {
+    next();
+}, res);
+
+const signinForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { validationFailed, errors } = await validator(req.body, {
         email: { required: true, email: true },
@@ -47,9 +48,9 @@ const signinForm = async (req, res, next) => {
     }
 
     next();
-};
+}, res);
 
-const adminSigninForm = async (req, res, next) => {
+const adminSigninForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { validationFailed, errors } = await validator(req.body, {
         username: { required: true, string: true },
@@ -62,9 +63,9 @@ const adminSigninForm = async (req, res, next) => {
     }
 
     next();
-};
+}, res);
 
-const resetPasswordForm = async (req, res, next) => {
+const resetPasswordForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { validationFailed, errors } = await validator(req.body, {
         password: { required: true, password: true },
@@ -77,9 +78,9 @@ const resetPasswordForm = async (req, res, next) => {
     }
 
     next();
-};
+}, res);
 
-const verifyOTPForm = async (req, res, next) => {
+const verifyOTPForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { validationFailed, errors } = await validator(req.body, {
         email: { required: true, email: true },
@@ -92,9 +93,9 @@ const verifyOTPForm = async (req, res, next) => {
     }
 
     next();
-};
+}, res);
 
-const sendOTPForm = async (req, res, next) => {
+const sendOTPForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { validationFailed, errors } = await validator(req.body, {
         email: { required: true, email: true },
@@ -106,6 +107,6 @@ const sendOTPForm = async (req, res, next) => {
     }
 
     next();
-};
+}, res);
 
 export default { signupForm, signinForm, adminSigninForm, resetPasswordForm, verifyOTPForm, sendOTPForm };

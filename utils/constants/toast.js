@@ -20,21 +20,21 @@ export default Object.freeze({
     },
 
     AUTHENTICATION: {
-        SUCCESS: 'Login successful!',
+        SUCCESS: 'Login successful',
         FAILED: 'Invalid email or password. Please try again',
         ADMIN_FAILED: 'Invalid username or password. Please try again',
         GRANTED: 'Admin authorization granted',
     },
 
     REGISTRATION: {
-        SUCCESS: 'Registration successful!',
+        SUCCESS: 'Registration successful',
     },
 
     OTP: {
         SENT: 'OTP sent to your email',
         FAILED: 'Failed to send OTP. Please try reseding',
         VFAILED: 'Invalid OTP. Please try again',
-        VSUCCESS: 'OTP verified successfully!',
+        VSUCCESS: 'OTP verified successfully',
     },
 
     PASSWORD: {

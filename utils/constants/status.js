@@ -10,4 +10,10 @@ export default Object.freeze({
     CONDITIONALLY_ACCEPTED: 'conditionally-accepted',
     REJECTED: 'rejected',
     PENDING: 'pending',
+
+    // progress
+    SUBMITTED: 'submitted',
+    PENDING_REVIEW: 'pending-review',
+    REVIEWED: 'reviewed',
+    PROGRESS_REJECTED: 'rejected',
 });

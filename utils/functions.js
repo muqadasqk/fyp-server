@@ -13,15 +13,26 @@ import env from "../config/env.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // function to check existence of a document based on field value query
-export const existsInDatabase = async ({ field, value, model, except }) => await tryCatch(async () => {
-    const query = { [field]: field === '_id' ? new mongoose.Types.ObjectId(value) : value };
+export const existsInDatabase = async (value, options) => await tryCatch(async () => {
+    const model = Object.keys(options)[0]
 
-    if (except) {
-        const key = Object.keys(except)[0];
-        query[key] = { $ne: except[key] }
+    if (!modelExists(model)) {
+        throw new Error(`Invalid ${model} model collection`);
     }
 
-    return await database.connection.collection(model).countDocuments(query);
+    const query = { [options[model]]: options[model] === '_id' ? new mongoose.Types.ObjectId(value) : value };
+
+    if (options.except) {
+        const key = Object.keys(options.except)[0];
+        query[key] = { $ne: options.except[key] }
+    }
+
+    return await database.connection.collection(model + 's').countDocuments(query);
+});
+
+// function to check existsence of mongo collection model
+export const modelExists = modelName => Object.keys(mongoose.models).map(str.lower).some(model => {
+    return str.compare(model, modelName, { strict: true });
 });
 
 // function to validate mongoDB ObjectId
@@ -38,15 +49,38 @@ export const verifyJWT = token => tryCatch(() => {
     return jwt.verify(token.replace('Bearer ', ''), env.secret.key);
 });
 
-// validate password
+// password object containg methods related with password
 export const password = {
-    validate: async (password, hash) => {
+    // method to compare password with hash
+    compare: async (password, hash) => {
         return await bcrypt.compare(password, hash);
     },
 
+    // method to make hash of string
     hash: async (password) => {
         return await bcrypt.hash(password, await bcrypt.genSalt());
     },
+
+    // method to generate a rondom password; optionally shuffled string
+    generate: () => {
+        const alphaChars = 'abcdefghijklmnopqrstuvwxyz';
+        const upperAlphaChars = str.upper(alphaChars);
+        const numChars = '1234567890';
+        const specialChars = '@#$&';
+
+        return [
+            getRandomChar(alphaChars),
+            getRandomChar(upperAlphaChars),
+            getRandomChar(numChars),
+            getRandomChar(specialChars),
+            ...Array(4).fill(0).map(() => getRandomChar(alphaChars + upperAlphaChars + numChars + specialChars)),
+        ].join('');
+    }
+};
+
+// function to get a random character from a string
+function getRandomChar(charSet) {
+    return charSet.charAt(Math.floor(Math.random() * charSet.length));
 };
 
 // function to execute block of code in try-catch exception handling
@@ -102,6 +136,9 @@ export const is = {
 
 // object having methods related to string
 export const str = {
+    // method to change parameter(s) to string type
+    toString: (...args) => args.map(String),
+
     // method to capitalize the string
     cap: string => {
         if (!is.string(string)) return string;
@@ -112,6 +149,18 @@ export const str = {
     capEach: string => {
         if (!is.string(string)) return string;
         return string.split(' ').map(str.cap).join(' ');
+    },
+
+    // method to capitalize the string
+    upper: string => {
+        if (!is.string(string)) return string;
+        return string.toUpperCase();
+    },
+
+    // method to capitalize the string
+    lower: string => {
+        if (!is.string(string)) return string;
+        return string.toLowerCase();
     },
 
     // method to create slug of string
@@ -128,6 +177,20 @@ export const str = {
 
     // method to generate an OTP of specified lenght
     generateOTP: length => Math.floor(Math.random() * (10 ** length)),
+
+    // method to compare two strings; optionally strich comparison
+    compare: (source, target, options = { strict: false }) => {
+        const [x, y] = str.toString(source, target);
+
+        if (options.strict) return x === y;
+        return x.toLowerCase() === y.toLowerCase();
+    },
+
+    // method to shuffle the string
+    shuffle: (string = '') => string.split('').reduce((acc, char) => {
+        acc.splice(Math.floor(Math.random() * (acc.length + 1)), 0, char);
+        return acc;
+    }, []).join(''),
 }
 
 // object having method related to object

@@ -39,7 +39,7 @@ const not = {
     // middleware to ensure the request user is not admin; otherwise return back with access denied response
     admin: (req, res, next) => tryCatch(async () => {
         if (req.user.role === userRole.ADMIN) {
-            return res.response(httpCode.REDIRECT, toast.MISC.FORBIDDEN);
+            return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
         }
 
         next();
@@ -48,7 +48,7 @@ const not = {
     // middleware to ensure the request user is not supervisor; otherwise return back with access denied response
     supervisor: (req, res, next) => tryCatch(async () => {
         if (req.user.role === userRole.SUPERVISOR) {
-            return res.response(httpCode.REDIRECT, toast.MISC.FORBIDDEN);
+            return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
         }
 
         next();
@@ -57,11 +57,41 @@ const not = {
     // middleware to ensure the request user is not student; otherwise return back with access denied response
     student: (req, res, next) => tryCatch(async () => {
         if (req.user.role === userRole.STUDENT) {
-            return res.response(httpCode.REDIRECT, toast.MISC.FORBIDDEN);
+            return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
         }
 
         next();
     }, res),
 }
 
-export default { authenticate, not };
+// object containing 3 middlewares to check is request user is admin/supervsor/student
+const is = {
+    // middleware to ensure the request user is admin; otherwise return back with access denied response
+    admin: (req, res, next) => tryCatch(async () => {
+        if (req.user.role !== userRole.ADMIN) {
+            return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
+        }
+
+        next();
+    }, res),
+
+    // middleware to ensure the request user is supervisor; otherwise return back with access denied response
+    supervisor: (req, res, next) => tryCatch(async () => {
+        if (req.user.role !== userRole.SUPERVISOR) {
+            return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
+        }
+
+        next();
+    }, res),
+
+    // middleware to ensure the request user is student; otherwise return back with access denied response
+    student: (req, res, next) => tryCatch(async () => {
+        if (req.user.role !== userRole.STUDENT) {
+            return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
+        }
+
+        next();
+    }, res),
+}
+
+export default { authenticate, not, is };

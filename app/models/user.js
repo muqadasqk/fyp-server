@@ -16,21 +16,21 @@ const userSchema = new mongoose.Schema({
     },
     nic: {
         type: String,
-        required: true,
         unique: true,
-        validate: { validator: v => /^\d{13}$/.test(v) }
+        validate: { validator: v => v === null || /^\d{13}$/.test(v) },
+        sparse: true,
+        default: null,
     },
     rollNo: {
         type: String,
         unique: true,
-        validate: {
-            validator: v => v === null || /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/.test(v)
-        },
+        validate: { validator: v => v === null || /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/.test(v) },
+        sparse: true,
         default: null
     },
     role: {
         type: String,
-        enum: ['admin', 'supervisor', 'student'],
+        enum: ['supervisor', 'student'],
         default: 'supervisor',
     },
     status: {
@@ -44,6 +44,7 @@ const userSchema = new mongoose.Schema({
     },
     image: {
         type: String,
+        default: 'default.jpg',
     },
     verifiedAt: {
         type: Date,
@@ -51,6 +52,7 @@ const userSchema = new mongoose.Schema({
     },
     verificationOTP: {
         type: String,
+        default: null
     },
 }, { timestamps: true, versionKey: false });
 

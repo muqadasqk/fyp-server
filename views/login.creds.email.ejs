@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= data.subject ?? 'Verification' %></title>
+    <title><%= data.subject ?? 'Welcome to FYP Management System' %></title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -36,15 +36,10 @@
         .content {
             padding: 25px;
         }
-
-        .credentials .otp {
-            background-color: #f7f7f7;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 20px;
-            font-weight: bold;
-            color: #212121;
-            text-align: center;
+        
+        .credentials p {
+            font-size: inherit; /* Inherit font size from parent element */
+            margin-bottom: 10px;
         }
         
         .footer {
@@ -59,14 +54,13 @@
             <h2>FYP Management System</h2>
         </div>
         <div class="content">
-            <p>Dear <strong><%= data.user %></strong>,</p>
-
-            <p>Your OTP code. Keep it confidential and do not share with anyone.</p>
+            <p>Dear <strong><%= data.user.name %></strong>,</p>
+            <p>Your account has been created, Here are Login credentials below</p>
             <div class="credentials">
-                <p class="otp"><%= data.otp %></p>
-            </div>            
-            <p>Please enter this OTP to proceed <%= data.subject ?? 'verification' %></p>
-
+                <p>Email: <%= data.user.email %></p>
+                <p>Password: <%= data.user.password %></p>
+            </div>
+            <p>Please note that it's recommended to change your password after the first login.</p>
         </div>
         <div class="footer">
             <p>Best regards,</p>
