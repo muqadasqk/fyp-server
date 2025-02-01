@@ -26,9 +26,5 @@ export default Object.freeze({
     admin: {
         username: process.env.ADMIN_USERNAME,
         password: process.env.ADMIN_PASSWORD
-    },
-
-    documents: {
-        perpage: process.env.DOCUMENT_PARPAGE
     }
 });
