@@ -10,9 +10,9 @@ const createForm = (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { validationFailed, errors } = await validator(req.body, {
         name: { required: true, string: true, min: 3, max: 50 },
-        email: { required: true, email: true, unique: { users: 'email' }, min: 6, max: 255 },
-        nic: { number: true, unique: { users: 'nic' }, size: 13 },
-        rollNo: { unique: { users: 'rollNo' }, size: 7, regex: /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/ },
+        email: { required: true, email: true, unique: { user: 'email' }, min: 6, max: 255 },
+        nic: { number: true, unique: { user: 'nic' }, size: 13 },
+        rollNo: { unique: { user: 'rollNo' }, size: 7, regex: /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/ },
         role: { in: [userRole.SUPERVISOR, userRole.STUDENT] },
         image: { extension: ['jpg', 'jpeg', 'png'], filesize: 3072 },
     });

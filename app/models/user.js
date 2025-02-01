@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema({
         minlength: 6,
         maxlength: 255
     },
+    password: {
+        type: String,
+        required: true,
+    },
+    
     nic: {
         type: String,
         unique: true,
@@ -37,10 +42,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['active', 'inactive', 'verification-pending'],
         default: 'verification-pending'
-    },
-    password: {
-        type: String,
-        required: true,
     },
     image: {
         type: String,

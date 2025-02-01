@@ -1,3 +1,4 @@
+import env from "../../config/env.js";
 import httpCode from "../../utils/constants/http.code.js";
 import status from "../../utils/constants/status.js";
 import toast from "../../utils/constants/toast.js";
@@ -8,16 +9,20 @@ import userService from "../services/user.service.js"
 
 // RETRIEVE ALL USER DOCUMENTS ACCORDINGLY
 const all = (req, res) => tryCatch(async () => {
-    // retrieve all user documents
-    let users = await userService.all(req.query.q);
+    // retrieve all user documents optionally with query and page related with certain limits
+    const data = await userService.all({
+        query: req.query.q ?? '',
+        page: parseInt(req.query.page ?? 1),
+        limit: parseInt(req.query.limit ?? env.documents.perpage)
+    });
 
     // is request user is supervisor return only student documents
     if (req.user.role === userRole.SUPERVISOR) {
-        users = users.filter(user => user.role === userRole.STUDENT);
+        data.users = data.users.filter(user => user.role === userRole.STUDENT);
     }
 
     // return back with success response containing user documents
-    return res.response(httpCode.SUCCESS, toast.DATA.ALL('user'), { users });
+    return res.response(httpCode.SUCCESS, toast.DATA.ALL('user'), { ...data });
 }, res);
 
 // RETRIEVE ONE SINGLE SPECIFIED USER DOCUMENT BY ID
