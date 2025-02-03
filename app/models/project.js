@@ -32,22 +32,23 @@ const projectSchema = new mongoose.Schema({
     },
     abstract: {
         type: String,
-        default: null,
-        validate: { validator: v => rules.word(v, { min: 200, max: 350 }) }
-    },
-    status: {
-        type: String,
-        enum: ['project', 'accepted', 'conditionally-accepted', 'rejected', 'pending'],
-        default: 'pending'
-    },
-
-    remarks: {
-        type: String,
+        validate: { validator: v => v === null || rules.word(v, { min: 200, max: 350 }) },
         default: null,
     },
     proposal: {
         type: String,
         default: null,
+    },
+
+    remarks: {
+        type: String,
+        validate: { validator: v => v === null || rules.word(v, { min: 5, max: 350 }) },
+        default: null,
+    },
+    status: {
+        type: String,
+        enum: ['project', 'accepted', 'conditionally-accepted', 'rejected', 'pending'],
+        default: 'pending'
     },
 }, { timestamps: true, versionKey: false });
 

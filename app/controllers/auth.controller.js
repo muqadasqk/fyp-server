@@ -47,7 +47,7 @@ const signup = (req, res) => tryCatch(async () => {
 // VERIFY EMAIL ADDRESS
 const verifyEmail = (req, res) => tryCatch(async () => {
   // retrieve user by email
-  const user = await userService.one({ email: req.body.email });
+  const user = await userService.retrieveOne({ email: req.body.email });
 
   // return back with failure response whether user is not found or OTP is invalid
   if (!user || user.verificationOTP != req.body.otp) {
@@ -74,7 +74,7 @@ const verifyEmail = (req, res) => tryCatch(async () => {
 // SIGIN FOR SUPERVISOR AND STUDENT
 const signin = (req, res) => tryCatch(async () => {
   // retrieve user by email 
-  let user = await userService.one({ email: req.body.email });
+  let user = await userService.retrieveOne({ email: req.body.email });
 
   // return back with access denied response whether user is not found or password is invalid
   if (!user || !(await password.compare(req.body.password, user.password))) {
@@ -134,7 +134,7 @@ const resetPassword = (req, res) => tryCatch(async () => {
   const { userId } = await verifyJWT(req.params.token);
 
   // retrieve user by user ID extracted from token; return back with user not found response if unavailable
-  const user = await userService.one({ _id: userId });
+  const user = await userService.retrieveOne({ _id: userId });
   if (!user) return res.response(httpCode.ACCESS_DENIED, toast.MISC.ACCESS_DENIED);
 
   // create password hash
@@ -153,7 +153,7 @@ const resetPassword = (req, res) => tryCatch(async () => {
 // VERIFY OTP
 const verifyOTP = (req, res) => tryCatch(async () => {
   // retrieve user by email
-  const user = await userService.one({ email: req.body.email });
+  const user = await userService.retrieveOne({ email: req.body.email });
 
   // return back with failure response whether user is not found or OTP is invalid
   if (!user || user.verificationOTP != req.body.otp) {
@@ -178,7 +178,7 @@ const verifyOTP = (req, res) => tryCatch(async () => {
 // SENT OTP
 const sendOTP = (req, res) => tryCatch(async () => {
   // retrieve user by email; return invalid account response if not found
-  let user = await userService.one({ email: req.body.email });
+  let user = await userService.retrieveOne({ email: req.body.email });
   if (!user) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.ACCOUNT.INVALID);
 
   // generate random OTP of 6 digits

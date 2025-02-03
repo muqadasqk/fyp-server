@@ -1,28 +1,28 @@
-import { createFilter, input, paginationInfo, retrieveDocuments, tryCatch, validateMongoObjectID } from '../../utils/functions.js';
+import { createFilter, input, getPaginationMetadata, retrieveDocuments, tryCatch, validateMongoObjectID } from '../../utils/functions.js';
 import project from '../models/project.js';
 import file from '../../middlewares/file.js';
 import populateOptions from '../../utils/constants/populate.options.js';
 
 // function to retrieve all project documents
-const all = async ({ query, page, limit }) => {
+const retrieveAll = async ({ query, page, limit }) => {
     // create filter to match fields with query string
     const filter = createFilter(query, ['title', 'abstract', 'status']);
 
     // retrieve project documents an pagination info and return an object
     return await tryCatch(async () => {
         // obtain pagination info
-        const pagination = await paginationInfo(project, filter, { page, limit });
+        const pagination = await getPaginationMetadata(project, filter, { page, limit });
 
         // retrieve project documents according to query, page and limit
         const projects = await retrieveDocuments(project, filter, { page, limit, populate: 'project' });
 
         // return object containing document and pagination info
-        return { projects, page: pagination }
+        return { projects,  metadata: pagination };
     });
 };
 
 // function to retrieve single specified project document
-const one = async query => {
+const retrieveOne = async query => {
     // validate query is proper object
     input.validate(query, 'object');
 
@@ -75,11 +75,11 @@ const del = async id => {
 
     // delete old proposal file when project document deletion was successful
     if (deleted && deleted.proposal) {
-        file.delete(deleted.proposal)
+        file.delete(deleted.proposal);
     }
 
     // return deleted project document
     return deleted;
 };
 
-export default { all, one, create, update, delete: del };
+export default { retrieveAll, retrieveOne, create, update, delete: del };

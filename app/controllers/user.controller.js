@@ -1,3 +1,4 @@
+import env from "../../config/env.js";
 import httpCode from "../../utils/constants/http.code.js";
 import status from "../../utils/constants/status.js";
 import toast from "../../utils/constants/toast.js";
@@ -7,26 +8,31 @@ import { objFields, tryCatch, password, validateMongoObjectID, str } from "../..
 import userService from "../services/user.service.js"
 
 // RETRIEVE ALL USER DOCUMENTS ACCORDINGLY
-const all = (req, res) => tryCatch(async () => {
-    // retrieve all user documents
-    let users = await userService.all(req.query.q);
+const index = (req, res) => tryCatch(async () => {
+    // retrieve all user documents optionally with query and page related with certain limits
+    const data = await userService.retrieveAll({
+        query: req.query.q ?? '', // query search parameter to filter user documents
+        page: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
+        limit: parseInt(req.query.rpp ?? env.documents.perpage) // rpp (records per-page) parameter to retrieve certain documents per page
+    });
 
     // is request user is supervisor return only student documents
     if (req.user.role === userRole.SUPERVISOR) {
-        users = users.filter(user => user.role === userRole.STUDENT);
+        data.users = data.users.filter(user => user.role === userRole.STUDENT);
     }
 
     // return back with success response containing user documents
-    return res.response(httpCode.SUCCESS, toast.DATA.ALL('user'), { users });
+    return res.response(httpCode.SUCCESS, toast.DATA.ALL('user'), data);
 }, res);
 
+
 // RETRIEVE ONE SINGLE SPECIFIED USER DOCUMENT BY ID
-const one = (req, res) => tryCatch(async () => {
+const show = (req, res) => tryCatch(async () => {
     // vaidate is parameter ID is valid mongooseID
     validateMongoObjectID(req.params.userId);
 
     // retrieve specified user document
-    let user = await userService.one({ _id: req.params.userId })
+    let user = await userService.retrieveOne({ _id: req.params.userId })
 
     // return back with user document not found response
     if (!user) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.VALIDATION.INVALID_ID('user'));
@@ -40,6 +46,7 @@ const one = (req, res) => tryCatch(async () => {
     // return back with success response containg user document
     return res.response(httpCode.SUCCESS, toast.DATA.ONE('user'), { user });
 }, res);
+
 
 // CREATE A NEW UER DOCUMENT
 const create = (req, res) => tryCatch(async () => {
@@ -89,6 +96,7 @@ const create = (req, res) => tryCatch(async () => {
     return res.response(httpCode.RESOURCE_CREATED, toast.REGISTRATION.SUCCESS);
 }, res);
 
+
 // UPDATE USER DOCUMENT
 const update = (req, res) => tryCatch(async () => {
     // only fields that are allowed to be updated
@@ -115,17 +123,19 @@ const update = (req, res) => tryCatch(async () => {
     return res.response(httpCode.SUCCESS, toast.USER.UPDATED_SUCCESS, { user });
 }, res);
 
+
 // DELETE USER DOCUMENTS BY ID
 const del = (req, res) => tryCatch(async () => {
     // delete specified user document
     const user = await userService.delete(req.params.userId);
 
     // return back with user document not found response when unavailable
-    if (!user) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.VALIDATION.INVALID_ID('user'))
+    if (!user) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.VALIDATION.INVALID_ID('user'));
 
     // return back with success response
     return res.response(httpCode.SUCCESS, toast.USER.DELETED_SUCCESS);
 }, res);
+
 
 // UPDATE USER PASSWORD
 const updatePassword = (req, res) => tryCatch(async () => {
@@ -146,4 +156,5 @@ const updatePassword = (req, res) => tryCatch(async () => {
     return res.response(httpCode.SUCCESS, toast.PASSWORD.UPDATE_SUCCESS);
 }, res);
 
-export default { all, one, create, update, delete: del, updatePassword }
+
+export default { index, show, create, update, delete: del, updatePassword }

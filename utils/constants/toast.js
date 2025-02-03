@@ -8,6 +8,12 @@ export default Object.freeze({
         FAILED: (action, model) => `Failed to ${action} the ${model} record`,
     },
 
+    PROJECT: {
+        PROPOSAL_NOT_ALLOWED: 'You cannot add proposal file until the project is accepted',
+        SUPERVISOR_NOT_ALLOWED: 'You cannot assign supervisor until project is accepted',
+        ASSIGNED: (reference) => `${reference} already ${reference === 'you' ? 'have' : 'has'} an assigned project`,
+    },
+
     VALIDATION: {
         TAKEN: ({ key, value }) => `${key} '${value}' is already taken`,
         INVALID_ID: model => `Invalid ${model} ID`,

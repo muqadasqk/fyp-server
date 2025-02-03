@@ -23,7 +23,7 @@ const authenticate = (req, res, next) => tryCatch(async () => {
     };
 
     // retrieve user by user ID extracted from JWT token payload 
-    const user = await userService.one({ _id: userId });
+    const user = await userService.retrieveOne({ _id: userId });
 
     // return back with access denied response whtether user is not found or user status is not active
     if (!user || user.status !== status.ACTIVE) return res.response(httpCode.ACCESS_DENIED, toast.MISC.ACCESS_DENIED);

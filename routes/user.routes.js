@@ -11,14 +11,14 @@ const userRoutes = Router({ mergeParams: true });
 userRoutes.get('/',
     auth.authenticate, // middleware to authenticate request user based on JWT token
     auth.not.student, // middleware to ensure request user is not student
-    userController.all // controller method to retrieve all user docuements
+    userController.index // controller method to retrieve all user docuements
 );
 
 // single user document by id
 userRoutes.get('/:userId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
     auth.not.student, // middleware to ensure request user is not student
-    userController.one // controller method to retrieve one specified user documents
+    userController.show // controller method to retrieve one specified user documents
 );
 
 // route to create a new user document
@@ -43,7 +43,7 @@ userRoutes.patch('/',
 // delete user document by id
 userRoutes.delete('/:userId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
-    auth.not.student, // middleware to ensure request user is not student
+    auth.is.admin, // middleware to ensure request user is admin
     userController.delete // controller method to handle bussiness logic for deleting a user document
 );
 

@@ -10,19 +10,19 @@ const projectRoutes = Router({ mergeParams: true });
 // retrieve all project records
 projectRoutes.get('/',
     auth.authenticate, // middleware to authenticate request user based on JWT token
-    projectController.all // controller method to retrieve all project docuements
+    projectController.index // controller method to retrieve all project docuements
 );
 
 // single project record against id
 projectRoutes.get('/:projectId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
-    projectController.one // controller method to retrieve specified project docuement
+    projectController.show // controller method to retrieve specified project docuement
 );
 
 // create new project record
 projectRoutes.post('/',
     auth.authenticate, // middleware to authenticate request user based on JWT token
-    auth.is.student,
+    auth.is.student, // ensure the request user is not student
     file.save('proposal'), // middleware to save proposal file
     form.sanitize, // middleware to sanitize input fields
     validateProject.createForm, // middleware to enforce certain validations on input fields
@@ -41,6 +41,7 @@ projectRoutes.patch('/:projectId',
 // delete project record against id
 projectRoutes.delete('/:projectId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
+    auth.not.supervisor, // middleware to ensure request user is not supervisor
     projectController.delete // controller method to handle bussiness logic to update project document with certain fields
 );
 

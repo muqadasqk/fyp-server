@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import database from "../config/database.js";
 import mongoose from "mongoose";
 import env from "../config/env.js";
+import populateOptions from "./constants/populate.options.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,11 +21,10 @@ export const existsInDatabase = async (value, options) => await tryCatch(async (
         throw new Error(`Invalid ${model} model collection`);
     }
 
-    const query = { [options[model]]: options[model] === '_id' ? new mongoose.Types.ObjectId(value) : value };
-
+    let query = buildQuery(options[model], value);
     if (options.except) {
         const key = Object.keys(options.except)[0];
-        query[key] = { $ne: options.except[key] }
+        query = buildQuery(key, options.except[key], { operator: '$ne', query });
     }
 
     return await database.connection.collection(model + 's').countDocuments(query);
@@ -34,6 +34,97 @@ export const existsInDatabase = async (value, options) => await tryCatch(async (
 export const modelExists = modelName => Object.keys(mongoose.models).map(str.lower).some(model => {
     return str.compare(model, modelName, { strict: true });
 });
+
+// function to form a query
+export const buildQuery = (field, value, options = { operator: '', query: {} }) => {
+    if (options.operator && options.query) {
+        if (field !== '_id') {
+            return { ...options.query, [field]: { [options.operator]: value } };
+        }
+
+        validateMongoObjectID(value);
+        return { ...options.query, [field]: { [options.operator]: objectId(value) } };
+    }
+
+    else if (field !== '_id') {
+        return { [field]: value };
+    }
+
+    validateMongoObjectID(value);
+    return { [field]: objectId(value) };
+}
+
+// function to get pagination info
+export const getPaginationMetadata = async (model, filter, { page, limit }) => tryCatch(async () => {
+    // retrieve total documents count
+    const totalDocumentsCount = await model.countDocuments(filter);
+
+    // calculate total pages based on limit
+    const totalPages = Math.ceil(totalDocumentsCount / limit);
+
+    // calculate current record count
+    const skipRecords = (page - 1) * limit;
+    const currentRecordCount = await model.countDocuments(filter).skip(skipRecords).limit(limit);
+
+    // return object containing pagination metadata
+    return {
+        currentPage: page,
+        totalPages: totalPages,
+        recordsPerPage: limit,
+        totalRecordCount: totalDocumentsCount,
+        currentRecordCount: currentRecordCount
+    };
+});
+
+// function to get pagination info
+export const defaultPaginationMetadata = ({ page, limit }) => ({
+    currentPage: page,
+    totalPages: 0,
+    recordsPerPage: limit,
+    totalRecordCount: 0,
+    currentRecordCount: 0
+});
+
+// function to retrieve documents
+export const retrieveDocuments = async (model, filter, { page, limit, select = null, populate = null }) => tryCatch(async () => {
+    // retrieve document with optionally according to filter, page and limit with populate options
+    return await model.find(filter)
+        .select(select && select)
+        .skip((page - 1) * limit).limit(limit)
+        .populate(populate && populateOptions[populate])
+});
+
+// function to create search query
+export const createFilter = (query, filterFields, options = { mongooseId: false }) => {
+    // return empty object whether query or filterFields are empty
+    if (!query || filterFields.length === 0) {
+        return {};
+    }
+
+    // throw error if query is not a string
+    if (!is.string(query)) {
+        throw new Error('Query must be a string');
+    }
+
+    // throw error if filterFields parameter is not an array
+    if (!is.array(filterFields)) {
+        throw new Error('Filter fields must be an array');
+    }
+
+    // iterator over filterFields to create mongoDB filter query
+    const searchableFields = filterFields.map((field) => {
+        if (options.mongooseId) return { [field]: objectId(query) };
+        else return { [field]: { $regex: query, $options: 'i' } }
+    });
+
+    // return searchable query object
+    return { $or: searchableFields };
+};
+
+// function to create mongoose ObjectId
+export const objectId = id => {
+    return new mongoose.Types.ObjectId(id);
+}
 
 // function to validate mongoDB ObjectId
 export const validateMongoObjectID = (id) => {
@@ -91,7 +182,7 @@ export const tryCatch = async (fn, res = null) => {
         if (res === null) throw error;
 
         // return res.response(httpCode.SERVER_ERROR, toast.MISC.INTERNAL_ERROR, { error: error.message });
-        return res.response(httpCode.SERVER_ERROR, error.message);
+        return res.response(httpCode.SERVER_ERROR, error.message, { stack: error.stack });
     }
 };
 
@@ -118,6 +209,7 @@ export const is = {
     null: (data) => data === null,
     undefined: (data) => data === undefined,
     boolean: (data) => typeof data === 'boolean',
+    instance: (instance, model) => instance instanceof model,
 
     // method to enure value is not null|empty|undefined|0 or an empty array|object
     empty: (data) => {
@@ -202,14 +294,14 @@ export const objFields = {
         }
 
         return fields.reduce((acc, field) => {
-            if (Object.prototype.hasOwnProperty.call(user, field)) {
+            if (Object.prototype.hasOwnProperty.call(obj, field)) {
                 acc[field] = obj[field];
             }
             return acc;
         }, {});
     },
 
-    // // method to extract certain properties of an object except
+    // method to extract certain properties of an object except
     except: (obj, fields, options = { mongooseObject: false }) => {
         if (options.mongooseObject) {
             obj = obj.toObject();
@@ -222,6 +314,12 @@ export const objFields = {
             return acc;
         }, {});
     },
+
+    // method to check whether field(s) is/are available or not
+    available: (obj, field, options = { null: false }) => {
+        if (!options.null) return Object.hasOwn(obj, field);
+        return Object.hasOwn(obj, field) && !obj[field];
+    }
 }
 
 // function to generate and return an HTML template for email body content

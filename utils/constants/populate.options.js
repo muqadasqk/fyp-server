@@ -18,4 +18,12 @@ const project = [
     },
 ];
 
-export default { project };
+// progress populate options
+const progress = [
+    {
+        path: 'project',
+        populate: project,
+    },
+];
+
+export default { project, progress };

@@ -1,28 +1,27 @@
-import { input, tryCatch, validateMongoObjectID } from '../../utils/functions.js';
+import { createFilter, getPaginationMetadata, input, retrieveDocuments, tryCatch, validateMongoObjectID } from '../../utils/functions.js';
 import user from '../models/user.js';
 import file from '../../middlewares/file.js';
 
 // function to retrieve all user documents
-const all = async (query = null) => {
-    // initialized empty filter
-    const filter = {};
+const retrieveAll = async ({ query, page, limit }) => {
+    // create filter to match fields with query string
+    const filter = createFilter(query, ['name', 'email', 'nic', 'rollNo']);
 
-    // if there is query; set filter query accordingly to match with any of the following fields
-    if (query) {
-        filter['$or'] = [
-            { name: { $regex: query, $options: 'i' } },
-            { email: { $regex: query, $options: 'i' } },
-            { nic: { $regex: query, $options: 'i' } },
-            { rollNo: { $regex: query, $options: 'i' } },
-        ];
-    }
+    // retrieve project documents an pagination info and return an object
+    return await tryCatch(async () => {
+        // obtain pagination info
+        const pagination = await getPaginationMetadata(user, filter, { page, limit });
 
-    // return retrieved user documents or empty array
-    return await tryCatch(() => user.find(filter).select('-password'));
+        // retrieve project documents according to query, page and limit
+        const users = await retrieveDocuments(user, filter, { page, limit, select: '-password' });
+
+        // return object containing document and pagination info
+        return { users, metadata: pagination };
+    });
 };
 
 // function to retrieve single specified user document
-const one = async query => {
+const retrieveOne = async query => {
     // validate query is proper object
     input.validate(query, 'object');
 
@@ -49,7 +48,7 @@ const update = async (query, data) => {
     const updated = await tryCatch(() => user.findOneAndUpdate(query, data, { new: false }));
 
     // delete old image file if there was a new image uploaded
-    if (updated && updated.image !== 'default.jpg' && data.image) {
+    if (updated && data.image && updated.image !== 'default.jpg') {
         file.delete(updated.image);
     }
 
@@ -66,12 +65,12 @@ const del = async id => {
     const deleted = await tryCatch(async () => await user.findByIdAndDelete(id));
 
     // delete old image file when user document deletion was successful
-    if (deleted && update.image !== 'default.jpg' && deleted.image) {
-        file.delete(deleted.image)
+    if (deleted && deleted.image && deleted.image !== 'default.jpg') {
+        file.delete(deleted.image);
     }
 
     // return deleted user document
     return deleted;
 };
 
-export default { all, one, create, update, delete: del };
+export default { retrieveAll, retrieveOne, create, update, delete: del };
