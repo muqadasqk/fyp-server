@@ -1,28 +1,33 @@
-import express from 'express';
-import env from '../config/env.js';
-import database from '../config/database.js';
-import application from '../middlewares/app.js';
-import apiRoutes from '../app.js';
+import '../src/utils/extensions/array.js';
+import '../src/utils/extensions/object.js';
+import '../src/utils/extensions/string.js';
 
-// express application instance
+import express from 'express';
+
+import env from '../src/config/env.js';
+import database from '../src/config/database.js';
+import application from '../src/middlewares/app.js';
+import apiRoutes from '../src/app.js';
+
+// Express application instance
 const app = express();
 
-// registered application-level middlewares
+// Register application-level middlewares
 app.use(
     express.json(),
     express.urlencoded({ extended: true }),
-    application.response, // custom application-level middleware to send organized response
-    application.errorHandler // custom middleware to catch errors occured during the execution of application
+    application.response, // Custom application-level middleware to send organized response
+    application.errorHandler // Custom middleware to catch errors during execution
 );
 
-// register api routes
+// Register API routes
 app.use('/api', apiRoutes);
 
-// app listener
+// App listener
 database.connect().then(() => {
     app.listen(env.server.port, () => {
         console.log(`The server has started at [http://127.0.0.1:${env.server.port}]`);
     });
 }).catch((error) => {
-    console.error('There an error occured, while starting the server: ', error);
+    console.error('An error occurred while starting the server: ', error);
 });
