@@ -8,6 +8,9 @@ export default Object.freeze({
     password: (value) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value),
     regex: (value, pattern) => pattern.test(value),
 
+    rollNo: (value) => /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/.test(value),
+    nic: (value) => /^\d{13}$/.test(value),
+    
     number: (value) => /^[0-9]+$/.test(value),
     minDigit: (value, min) => /^[0-9]+$/.test(value) && value.length >= min,
     maxDigit: (value, max) => /^[0-9]+$/.test(value) && value.length <= max,

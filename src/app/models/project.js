@@ -32,7 +32,10 @@ const projectSchema = new mongoose.Schema({
     },
     abstract: {
         type: String,
-        validate: { validator: v => v === null || rules.word(v, { min: 200, max: 350 }) },
+        validate: {
+            validator: v => !v || rules.word(v, { min: 200, max: 350 }),
+            message: 'The abstract must be between 200 and 350 words'
+        },
         default: null,
     },
     proposal: {
@@ -42,7 +45,10 @@ const projectSchema = new mongoose.Schema({
 
     remarks: {
         type: String,
-        validate: { validator: v => v === null || rules.word(v, { min: 5, max: 350 }) },
+        validate: {
+            validator: v => !v || rules.word(v, { min: 5, max: 350 }),
+            message: 'Remarks must be between 5 and 350 words'
+        },
         default: null,
     },
     status: {

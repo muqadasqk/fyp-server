@@ -12,6 +12,10 @@ export const messages = {
     mongooseId: "The :field must be a valid moongose ID",
     unique: "The :field :value is already taken",
     exists: "The :field :value is invalid",
+
+    rollNo: "The :field must be in the format (21SW066)",
+    nic: 'the :field must be exactly 13 digits',
+
     word: "The :field must be between :min and :max words",
     same: "The :field should be the same as :same",
     in: "The :field must be one of the following (:in)",
@@ -27,9 +31,9 @@ const validationMessage = (rule, options) => tryCatch(() => {
     return messages[rule]
         .replace(/:field\b/g, options.field.splitCamelCase())
         .replace(/:value\b/g, options.value)
-        .replace(/:same\b/g, options.same && Object.keys(options.same)[0]) // .first()
-        .replace(/:min\b/g, options.min || options[rule].min)
-        .replace(/:max\b/g, options.max || options[rule].max)
+        .replace(/:same\b/g, options.same && Object.keys(options.same).first())
+        .replace(/:min\b/g, options.min ?? options[rule].min)
+        .replace(/:max\b/g, options.max ?? options[rule].max)
         .replace(/:minDigit\b/g, options.minDigit)
         .replace(/:maxDigit\b/g, options.maxDigit)
         .replace(/:size\b/g, options.size)

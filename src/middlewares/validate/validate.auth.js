@@ -11,7 +11,7 @@ const signupForm = (req, res, next) => tryCatch(async () => {
         name: { required: true, string: true, min: 3, max: 50 },
         email: { required: true, email: true, unique: { user: 'email' }, min: 6, max: 255 },
         nic: { required: true, number: true, unique: { user: 'nic' }, size: 13 },
-        rollNo: { unique: { user: 'rollNo' }, size: 7, regex: /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/ },
+        rollNo: { rollNo: true, unique: { user: 'rollNo' } },
         role: { in: [userRole.SUPERVISOR, userRole.STUDENT] },
         password: { required: true, password: true },
         image: { required: true, extension: ['jpg', 'jpeg', 'png'], filesize: 3072 },

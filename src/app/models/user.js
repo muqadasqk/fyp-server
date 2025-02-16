@@ -1,35 +1,55 @@
 import mongoose from 'mongoose';
+import rules from '../../utils/libs/validation/rules.js';
+import { messages } from '../../utils/libs/validation/messages.js';
 
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
         minlength: 3,
-        maxlength: 50
+        maxlength: 50,
+        validate: {
+            validator: v => rules.string(v),
+            message: messages.string.replace(':field', 'name')
+        },
     },
     email: {
         type: String,
         required: true,
         unique: true,
         minlength: 6,
-        maxlength: 255
+        maxlength: 255,
+        validate: {
+            validator: v => rules.email(v),
+            message: messages.email
+        },
     },
     password: {
         type: String,
         required: true,
+        validate: {
+            validator: v => rules.password(v),
+            message: messages.password
+        },
     },
-    
+
     nic: {
         type: String,
         unique: true,
-        validate: { validator: v => v === null || /^\d{13}$/.test(v) },
+        validate: {
+            validator: v => !v ?? rules.nic(v),
+            message: messages.nic.replace(':field', 'nic')
+        },
         sparse: true,
         default: null,
     },
     rollNo: {
         type: String,
         unique: true,
-        validate: { validator: v => v === null || /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/.test(v) },
+        validate: {
+            validator: v => !v ?? rules.rollNo(v),
+            message: messages.rollNo.replace(':field', 'roll no')
+        },
         sparse: true,
         default: null
     },
@@ -42,7 +62,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'default.jpg',
     },
-    
+
     status: {
         type: String,
         enum: ['active', 'inactive', 'verification-pending'],
@@ -57,19 +77,5 @@ const userSchema = new mongoose.Schema({
         default: null
     },
 }, { timestamps: true, versionKey: false });
-
-// userSchema.post('updateOne', async function () {
-//     await mongoose.model('Project').updateMany({ lead: this._id }, { $set: { lead: this._update.$set._id } });
-//     await mongoose.model('Project').updateMany({ memberOne: this._id }, { $set: { memberOne: this._update.$set._id } });
-//     await mongoose.model('Project').updateMany({ memberTwo: this._id }, { $set: { memberTwo: this._update.$set._id } });
-//     await mongoose.model('Project').updateMany({ supervisor: this._id }, { $set: { supervisor: this._update.$set._id } });
-// });
-
-// userSchema.post('remove', async function () {
-//     await mongoose.model('Project').updateMany({ lead: this._id }, { $unset: { lead: 1 } });
-//     await mongoose.model('Project').updateMany({ memberOne: this._id }, { $unset: { memberOne: 1 } });
-//     await mongoose.model('Project').updateMany({ memberTwo: this._id }, { $unset: { memberTwo: 1 } });
-//     await mongoose.model('Project').updateMany({ supervisor: this._id }, { $unset: { supervisor: 1 } });
-// });
 
 export default mongoose.model('User', userSchema);

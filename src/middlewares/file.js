@@ -45,7 +45,7 @@ const save = (name) => (req, res, next) => tryCatch(() => {
             // add a new key-value for uploaded file into request body object with file name, size and mimetype
             req.body[name] = {
                 name: req.file.filename,
-                extension: req.file.filename.split('.')[1],
+                extension: req.file.filename.split('.').last(),
                 size: req.file.size / 1024,
             }
 
