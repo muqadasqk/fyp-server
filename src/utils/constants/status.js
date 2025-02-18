@@ -16,4 +16,8 @@ export default Object.freeze({
     PENDING_REVIEW: 'pending-review',
     REVIEWED: 'reviewed',
     PROGRESS_REJECTED: 'rejected',
+
+    // meeting
+    SCHEDULED: 'scheduled',
+    COMPLETED: 'completed',
 });

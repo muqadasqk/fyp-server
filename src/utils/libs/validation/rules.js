@@ -10,7 +10,12 @@ export default Object.freeze({
 
     rollNo: (value) => /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/.test(value),
     nic: (value) => /^\d{13}$/.test(value),
-    
+    url: (value) => /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(\/\S*)?$/.test(value),
+    date: (value, { futureDate = false }) => {
+        const date = new Date(value);
+        return !isNaN(date.getTime()) && (futureDate && date > new Date());
+    },    
+
     number: (value) => /^[0-9]+$/.test(value),
     minDigit: (value, min) => /^[0-9]+$/.test(value) && value.length >= min,
     maxDigit: (value, max) => /^[0-9]+$/.test(value) && value.length <= max,
@@ -27,6 +32,7 @@ export default Object.freeze({
     extension: ({ extension }, options) => Object.values(options).includes(extension),
 
     same: (value, match) => value == Object.values(match)[0],
+    match: (value, match) => value == match,
     in: (value, options) => Object.values(options).includes(value),
 
     mongooseId: (value) => mongoose.isValidObjectId(value),

@@ -1,20 +1,23 @@
+// user confidentials fields
+const userConfidentialFields = '-password -verificationOTP';
+
 // project populate options
 const project = [
     {
         path: 'lead',
-        select: '-password -verificationOTP',
+        select: userConfidentialFields
     },
     {
         path: 'memberOne',
-        select: '-password -verificationOTP',
+        select: userConfidentialFields
     },
     {
         path: 'memberTwo',
-        select: '-password -verificationOTP',
+        select: userConfidentialFields
     },
     {
         path: 'supervisor',
-        select: '-password -verificationOTP',
+        select: userConfidentialFields
     },
 ];
 
@@ -26,4 +29,12 @@ const progress = [
     },
 ];
 
-export default { project, progress };
+// meeting populate options
+const meeting = [
+    {
+        path: 'project',
+        populate: project,
+    },
+];
+
+export default { project, progress, meeting };

@@ -14,6 +14,12 @@ progressRoutes.get('/',
     progressController.index // controller method to retrieve all progress docuements
 );
 
+// project related progress documents against project id
+progressRoutes.get('/project/:projectId',
+    auth.authenticate, // middleware to authenticate request user based on JWT token
+    progressController.projectProgresses // controller method to retrieve specified progress docuement
+);
+
 // single progress document against id
 progressRoutes.get('/:progressId',
     auth.authenticate, // middleware to authenticate request user based on JWT token

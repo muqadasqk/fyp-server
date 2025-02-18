@@ -7,42 +7,20 @@ import validateParameter from '../../utils/libs/helper/validate.parameter.js';
 import validateMongooseObjectId from '../../utils/libs/database/validate.mongoose.object.id.js';
 import project from '../models/project.js';
 import file from '../../middlewares/file.js';
-import userRole from '../../utils/constants/user.role.js';
-
 
 // function to retrieve all project documents
-const retrieveAll = async (requestUser, options = {}) => {
+const retrieveAll = async (options = {}, userQuery = null,) => {
     // destructure options
     const { searchQuery, currentPage, documentCount } = options;
 
-    // initialize query
-    let query = {};
-
-    // create query to filter documents
-    const filter = buildMongoQuery({
+    // create filter query
+    const filterQuery = buildMongoQuery({
         value: searchQuery,
         fields: ['title', 'abstract', 'status']
     });
 
-    // role-based query filtering 
-    // switch (requestUser.role) {
-    //     case userRole.SUPERVISOR:
-    //         query = { $and: [{ supervisor: requestUser.id }, filter] };
-    //         break;
-
-    //     case userRole.STUDENT:
-    //         const studentQuery = buildMongoQuery({
-    //             fields: ['lead', 'memberOne', 'memberTwo'],
-    //             value: requestUser.id
-    //         }, { isObjectId: true });
-    //         query = { $and: [studentQuery, filter] };
-    //         break;
-
-    //     default:
-    //         query = filter;
-    // }
-    query = filter;
-
+    // merge queries to filterQuery documents
+    const query = userQuery ? { $and: [userQuery, filterQuery] } : filterQuery;
 
     // retrieve user documents and pagination metadata
     return await tryCatch(async () => {

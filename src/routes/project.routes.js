@@ -8,19 +8,25 @@ import auth from "../middlewares/auth.js";
 
 const projectRoutes = Router({ mergeParams: true });
 
-// retrieve all project records
+// retrieve all project documents
 projectRoutes.get('/',
     auth.authenticate, // middleware to authenticate request user based on JWT token
     projectController.index // controller method to retrieve all project docuements
 );
 
-// single project record against id
+// supervisor project documents against supervisor id
+projectRoutes.get('/supervisor/:supervisorId',
+    auth.authenticate, // middleware to authenticate request user based on JWT token
+    projectController.supervisorProjects // controller method to retrieve specified project docuement
+);
+
+// single project document against id
 projectRoutes.get('/:projectId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
     projectController.show // controller method to retrieve specified project docuement
 );
 
-// create new project record
+// create new project document
 projectRoutes.post('/',
     auth.authenticate, // middleware to authenticate request user based on JWT token
     auth.is.student, // ensure the request user is not student
@@ -30,7 +36,7 @@ projectRoutes.post('/',
     projectController.create // controller method to handle bussiness logic to create a new project document
 );
 
-// update project record against id
+// update project document against id
 projectRoutes.patch('/:projectId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
     file.save('proposal'), // middleware to save proposal file
@@ -39,7 +45,7 @@ projectRoutes.patch('/:projectId',
     projectController.update // controller method to handle bussiness logic to update project document with certain fields
 );
 
-// delete project record against id
+// delete project document against id
 projectRoutes.delete('/:projectId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
     auth.not.supervisor, // middleware to ensure request user is not supervisor

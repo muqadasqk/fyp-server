@@ -6,8 +6,6 @@ import httpCode from "../../utils/constants/http.code.js";
 import userRole from "../../utils/constants/user.role.js";
 import toast from "../../utils/constants/toast.js";
 import env from "../../config/env.js";
-import project from "../models/project.js";
-import is from "../../utils/libs/helper/is.js";
 
 
 // RETRIEVE ALL PROGRESS DOCUMENTS
@@ -15,18 +13,44 @@ const index = (req, res) => tryCatch(async () => {
     // retrieve all progress documents optionally with query and page related with certain limits
     const data = await progressService.retrieveAll(
         {
-            id: req.user._id ?? req.user.name, // request user role to get its specific progress documents only
-            role: req.user.role, // request user role to differentiate while retrieving its specific progress documents
-        },
-        {
             searchQuery: req.query.q ?? '', // query search parameter to filter progress documents
             currentPage: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
             documentCount: parseInt(req.query.c ?? env.document.count) // count parameter to retrieve certain document count on per page
+        },
+        {
+            requestUser: {
+                id: req.user._id ?? req.user.name, // request user role to get its specific progress documents only
+                role: req.user.role, // request user role to differentiate while retrieving its specific progress documents
+            }
         }
     );
 
     // return back with sucess response containg progress documents
     return res.response(httpCode.SUCCESS, toast.DATA.ALL('progress'), data);
+}, res);
+
+
+// RETRIEVE ALL PROJECT RELATED PROGRESSES
+const projectProgresses = (req, res) => tryCatch(async () => {
+    // vaidate project id
+    validateMongooseObjectId(req.params.projectId);
+
+    // retrieve project related progress documents
+    const data = await progressService.retrieveAll(
+        {
+            searchQuery: req.query.q ?? '', // query search parameter to filter project documents
+            currentPage: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
+            documentCount: parseInt(req.query.c ?? env.document.count) // rpp (records per-page) parameter to retrieve certain documents per page
+        },
+        {
+            userQuery: buildMongoQuery({
+                field: 'project', value: req.params.projectId
+            }, { isObjectId: true })
+        }
+    );
+
+    // return back with success response containg project document
+    return res.response(httpCode.SUCCESS, toast.DATA.ALL('project progress'), data);
 }, res);
 
 
@@ -48,7 +72,7 @@ const show = (req, res) => tryCatch(async () => {
 }, res);
 
 
-// CREATE A NEW PROGRES DOCUMENT
+// CREATE A NEW PROGRESS DOCUMENT
 const create = (req, res) => tryCatch(async () => {
     // only fields that are allowed to be inserted
     const fields = ['project', 'summary', 'fyp', 'resource'];
@@ -151,7 +175,7 @@ const del = (req, res) => tryCatch(async () => {
     const query = buildMongoQuery({ field: '_id', value: req.params.progressId });
 
     // verify progress project belongs to request user
-    if (req.user.role != userRole.ADMIN) {
+    if (req.user.role !== userRole.ADMIN) {
         // retrieve progress
         const progress = await progressService.retrieveOne(query);
 
@@ -171,4 +195,4 @@ const del = (req, res) => tryCatch(async () => {
 }, res);
 
 
-export default { index, show, create, update, delete: del }
+export default { index, projectProgresses, show, create, update, delete: del }

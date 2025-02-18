@@ -12,22 +12,37 @@ import env from "../../config/env.js";
 // RETRIEVE ALL PROJECT DOCUMENTS
 const index = (req, res) => tryCatch(async () => {
     // retrieve all project documents optionally with query and page related with certain limits
-    const data = await projectService.retrieveAll(
-        {
-            id: req.user._id ?? req.user.name, // request user role to get its specific project documents only
-            role: req.user.role, // request user role to differentiate while retrieving its specific project documents
-        },
-        {
-            searchQuery: req.query.q ?? '', // query search parameter to filter project documents
-            currentPage: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
-            documentCount: parseInt(req.query.c ?? env.document.count) // rpp (records per-page) parameter to retrieve certain documents per page
-        }
-    );
+    const data = await projectService.retrieveAll({
+        searchQuery: req.query.q ?? '', // query search parameter to filter project documents
+        currentPage: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
+        documentCount: parseInt(req.query.c ?? env.document.count) // rpp (records per-page) parameter to retrieve certain documents per page
+    });
 
     // return back with sucess response containg project documents
     return res.response(httpCode.SUCCESS, toast.DATA.ALL('project'), data);
 }, res);
 
+
+// RETRIEVE ALL SUPERVISOR RELATED PROJECTS
+const supervisorProjects = (req, res) => tryCatch(async () => {
+    // vaidate supervisor id
+    validateMongooseObjectId(req.params.supervisorId);
+
+    // retrieve supervisor related project documents
+    const data = await projectService.retrieveAll(
+        {
+            searchQuery: req.query.q ?? '', // query search parameter to filter project documents
+            currentPage: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
+            documentCount: parseInt(req.query.c ?? env.document.count) // rpp (records per-page) parameter to retrieve certain documents per page
+        },
+        buildMongoQuery({
+            field: 'supervisor', value: req.params.supervisorId
+        }, { isObjectId: true })
+    );
+
+    // return back with success response containg project document
+    return res.response(httpCode.SUCCESS, toast.DATA.ALL('supervisor project'), data);
+}, res);
 
 // RETRIEVE ONE SINGLE PROJECT DOCUMENT
 const show = (req, res) => tryCatch(async () => {
@@ -214,4 +229,4 @@ const del = (req, res) => tryCatch(async () => {
 }, res);
 
 
-export default { index, show, create, update, delete: del }
+export default { index, show, supervisorProjects, create, update, delete: del }
