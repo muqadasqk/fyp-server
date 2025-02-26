@@ -10,11 +10,12 @@ export default Object.freeze({
 
     rollNo: (value) => /^[0-9]{2}[a-zA-Z]{2}[0-9]{3}$/.test(value),
     nic: (value) => /^\d{13}$/.test(value),
+    pid: (value) => /^[A-Z]{3}-\d{3}$/.test(value),
     url: (value) => /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(\/\S*)?$/.test(value),
     date: (value, { futureDate = false }) => {
         const date = new Date(value);
         return !isNaN(date.getTime()) && (futureDate && date > new Date());
-    },    
+    },
 
     number: (value) => /^[0-9]+$/.test(value),
     minDigit: (value, min) => /^[0-9]+$/.test(value) && value.length >= min,

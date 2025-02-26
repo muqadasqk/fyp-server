@@ -10,6 +10,7 @@ import email from '../../utils/libs/helper/email.js';
 import status from "../../utils/constants/status.js";
 import validateAndDecodeToken from '../../utils/libs/helper/validate.and.decode.token.js';
 import env from "../../config/env.js";
+import buildMongoQuery from '../../utils/libs/database/build.mongo.query.js';
 
 
 // SIGNUP FOR SUPERVISOR AND STUDENT
@@ -79,7 +80,11 @@ const verifyEmail = (req, res) => tryCatch(async () => {
 // SIGIN FOR SUPERVISOR AND STUDENT
 const signin = (req, res) => tryCatch(async () => {
   // retrieve user by email 
-  let user = await userService.retrieveOne({ email: req.body.email });
+  let user = await userService.retrieveOne(
+    buildMongoQuery({
+      fields: ['email', 'nic', 'rollNo'], value: req.body.username
+    })
+  );
 
   // return back with access denied response whether user is not found or password is invalid
   if (!user || !(await password.verify(req.body.password, user.password))) {

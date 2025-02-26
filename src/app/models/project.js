@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import rules from '../../utils/libs/validation/rules.js';
+import { messages } from '../../utils/libs/validation/messages.js';
 
 const projectSchema = new mongoose.Schema({
     lead: {
@@ -23,6 +24,15 @@ const projectSchema = new mongoose.Schema({
         default: null
     },
 
+    pid: {
+        type: String,
+        unique: true,
+        required: true,
+        validate: {
+            validator: v => rules.pid(v),
+            message: messages.pid
+        }
+    },
     title: {
         type: String,
         unique: true,

@@ -17,6 +17,7 @@ export const messages = {
     nic: 'The :field must be exactly 13 digits',
     url: 'The :field contains an invalid URL address',
     date: 'The :field contains an invalid date or time',
+    pid: 'Invalid project ID format. Use XXX-001',
 
     word: "The :field must be between :min and :max words",
     same: "The :field should be the same as :same",

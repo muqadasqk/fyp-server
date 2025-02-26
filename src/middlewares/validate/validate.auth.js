@@ -38,7 +38,7 @@ const signupForm = (req, res, next) => tryCatch(async () => {
 const signinForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { errors, validationFailed } = await validator(req.body, {
-        email: { required: true, email: true },
+        username: { required: true },
         password: { required: true }
     });
 

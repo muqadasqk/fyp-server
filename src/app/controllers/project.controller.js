@@ -69,7 +69,7 @@ const show = (req, res) => tryCatch(async () => {
 // CREATE A NEW PROJECT DOCUMENT
 const create = (req, res) => tryCatch(async () => {
     // only fields that are allowed to be inserted
-    const fields = ['lead', 'memberOne', 'memberTwo', 'supervisor', 'title', 'abstract', 'type', 'category'];
+    const fields = ['lead', 'memberOne', 'memberTwo', 'supervisor', 'pid', 'title', 'abstract', 'type', 'category'];
 
     // extacting only allowed fields from request body
     const data = Object.fromEntries(
@@ -176,7 +176,7 @@ const update = (req, res) => tryCatch(async () => {
             changes[field] = null;
         };
     });
-    
+
     // update project document fields accordingly
     await projectService.update({ _id: project._id }, changes);
 

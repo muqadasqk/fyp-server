@@ -13,6 +13,7 @@ const createForm = async (req, res, next) => tryCatch(async () => {
         memberOne: { mongooseId: true, exists: { user: '_id' } },
         memberTwo: { mongooseId: true, exists: { user: '_id' } },
         supervisor: { mongooseId: true, exists: { user: '_id' } },
+        pid: { required: true, pid: true },
         title: { required: true, min: 3, max: 255, unique: { project: 'title' } },
         abstract: { required: true, word: { min: 200, max: 350 } },
         type: { required: true, in: [types.NEW, types.MODIFIED_OR_EXTENSION, types.RESEARCH_BASED] },
