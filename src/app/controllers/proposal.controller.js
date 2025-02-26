@@ -78,6 +78,9 @@ const update = (req, res) => tryCatch(async () => {
     // update proposal document fields accordingly
     const proposal = await proposalService.update({ _id: req.params.proposalId }, changes);
 
+    // return back with proposal document not found response
+    if (!proposal) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.VALIDATION.INVALID_ID('proposal'))
+
     // update reponse proposal document with changes
     Object.assign(proposal, changes);
 

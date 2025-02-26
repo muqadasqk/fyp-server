@@ -10,7 +10,7 @@ export const messages = {
 
     filesize: "The file size must not exceed :filesize MBs",
     mongooseId: "The :field must be a valid moongose ID",
-    unique: "The :field :value is already taken",
+    unique: "The :field ':value' is already taken",
     exists: "The :field :value is invalid",
 
     rollNo: "The :field must be in the format (21SW066)",

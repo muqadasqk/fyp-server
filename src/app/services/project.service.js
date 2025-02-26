@@ -72,7 +72,7 @@ const update = async (query, data) => {
     });
 
     // delete old proposal file if there was a new image uploaded 
-    if (updated && data.proposal) {
+    if (updated?.proposal && data.proposal) {
         file.delete(updated.proposal);
     }
 
