@@ -12,9 +12,9 @@ const index = (req, res) => tryCatch(async () => {
     // retrieve all meeting documents optionally with query and page related with certain limits
     const data = await meetingService.retrieveAll(
         {
-            searchQuery: req.query.q ?? '', // query search parameter to filter meeting documents
-            currentPage: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
-            documentCount: parseInt(req.query.c ?? env.document.count) // count parameter to retrieve certain document count on per page
+            searchQuery: req.query.query ?? '', // query search parameter to filter meeting documents
+            currentPage: parseInt(req.query.page ?? 1), // page parameter to retrieve documents ahead of page count
+            documentCount: parseInt(req.query.limit ?? env.document.count) // count parameter to retrieve certain document count on per page
         },
         {
             requestUser: {
@@ -37,9 +37,9 @@ const projectMeetings = (req, res) => tryCatch(async () => {
     // retrieve project related progress documents
     const data = await meetingService.retrieveAll(
         {
-            searchQuery: req.query.q ?? '', // query search parameter to filter project documents
-            currentPage: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
-            documentCount: parseInt(req.query.c ?? env.document.count) // rpp (records per-page) parameter to retrieve certain documents per page
+            searchQuery: req.query.query ?? '', // query search parameter to filter project documents
+            currentPage: parseInt(req.query.page ?? 1), // page parameter to retrieve documents ahead of page count
+            documentCount: parseInt(req.query.limit ?? env.document.count) // rpp (records per-page) parameter to retrieve certain documents per page
         },
         {
             userQuery: buildMongoQuery({

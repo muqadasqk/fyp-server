@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import rules from '../../utils/libs/validation/rules.js';
 
-const progressSchema = new mongoose.Schema({
+const presentationSchema = new mongoose.Schema({
     project: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project',
@@ -37,9 +37,9 @@ const progressSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['submitted', 'pending-review', 'reviewed', 'rejected'],
+        enum: ['submitted', 'pendingReview', 'reviewed', 'rejected'],
         default: 'pending-review',
     },
 }, { timestamps: true, versionKey: false });
 
-export default mongoose.model('Progress', progressSchema);
+export default mongoose.model('Presentation', presentationSchema);

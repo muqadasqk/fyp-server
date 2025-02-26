@@ -42,7 +42,7 @@ userRoutes.patch('/',
     userController.update // controller method to handle bussiness logic to update user document with certain fields
 );
 
-// update user document by id
+// update user password
 userRoutes.patch('/update-password',
     auth.authenticate, // middleware to authenticate request user based on JWT tokens
     auth.not.admin, // middleware to ensure request user is not admin

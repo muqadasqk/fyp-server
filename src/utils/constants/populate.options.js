@@ -2,6 +2,21 @@
 const userConfidentialFields = '-password -verificationOTP';
 
 // project populate options
+const idea = [
+    {
+        path: 'lead',
+        select: userConfidentialFields
+    },
+    {
+        path: 'memberOne',
+        select: userConfidentialFields
+    },
+    {
+        path: 'memberTwo',
+        select: userConfidentialFields
+    },
+];
+// project populate options
 const project = [
     {
         path: 'lead',
@@ -21,8 +36,8 @@ const project = [
     },
 ];
 
-// progress populate options
-const progress = [
+// presentation populate options
+const presentation = [
     {
         path: 'project',
         populate: project,
@@ -37,4 +52,4 @@ const meeting = [
     },
 ];
 
-export default { project, progress, meeting };
+export default { idea, project, presentation, meeting };

@@ -14,9 +14,9 @@ import env from "../../config/env.js";
 const index = (req, res) => tryCatch(async () => {
     // retrieve user documents
     const data = await userService.retrieveAll({
-        searchQuery: req.query.q ?? '', // query search parameter to filter user documents
-        currentPage: parseInt(req.query.p ?? 1), // page parameter to retrieve documents ahead of page count
-        documentCount: parseInt(req.query.c ?? env.document.count) // count parameter to retrieve certain document count on per page
+        searchQuery: req.query.query ?? '', // query search parameter to filter user documents
+        currentPage: parseInt(req.query.page ?? 1), // page parameter to retrieve documents ahead of page count
+        documentCount: parseInt(req.query.limit ?? env.document.count) // count parameter to retrieve certain document count on per page
     });
 
     // return back with success response containing user documents

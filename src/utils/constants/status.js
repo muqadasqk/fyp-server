@@ -2,22 +2,24 @@ export default Object.freeze({
     // account
     ACTIVE: 'active',
     INACTIVE: 'inactive',
-    VERIFICATION_PENDING: 'verification-pending',
+    VERIFICATION_PENDING: 'verificationPending',
 
-    // project
-    PROJECT: 'project',
+    // idea
     ACCEPTED: 'accepted',
-    CONDITIONALLY_ACCEPTED: 'conditionally-accepted',
+    CONDITIONALLY_ACCEPTED: 'conditionallyAccepted',
     REJECTED: 'rejected',
     PENDING: 'pending',
 
-    // progress
+    // prroject
+    COMPLETED: 'completed',
+    IN_PROGRESS: 'inProgress',
+
+    // presentation
     SUBMITTED: 'submitted',
-    PENDING_REVIEW: 'pending-review',
+    PENDING_REVIEW: 'pendingReview',
     REVIEWED: 'reviewed',
     PROGRESS_REJECTED: 'rejected',
 
     // meeting
     SCHEDULED: 'scheduled',
-    COMPLETED: 'completed',
 });

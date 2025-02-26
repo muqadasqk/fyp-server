@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import rules from '../../utils/libs/validation/rules.js';
 
-const projectSchema = new mongoose.Schema({
+const proposalSchema = new mongoose.Schema({
     lead: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -13,11 +13,6 @@ const projectSchema = new mongoose.Schema({
         default: null
     },
     memberTwo: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: null
-    },
-    supervisor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
@@ -37,8 +32,12 @@ const projectSchema = new mongoose.Schema({
             message: 'The abstract must be between 200 and 350 words'
         },
     },
-    proposal: {
+    remarks: {
         type: String,
+        validate: {
+            validator: v => !v || rules.word(v, { min: 5, max: 350 }),
+            message: 'The remarks must be between 5 and 350 words'
+        },
         default: null,
     },
 
@@ -57,9 +56,9 @@ const projectSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['completed', 'inProgress'],
-        default: 'inProgress'
+        enum: ['accepted', 'conditionallyAccepted', 'rejected', 'pending'],
+        default: 'pending'
     },
 }, { timestamps: true, versionKey: false });
 
-export default mongoose.model('Project', projectSchema);
+export default mongoose.model('Proposal', proposalSchema);
