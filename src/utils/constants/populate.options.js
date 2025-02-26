@@ -2,7 +2,7 @@
 const userConfidentialFields = '-password -verificationOTP';
 
 // project populate options
-const idea = [
+const proposal = [
     {
         path: 'lead',
         select: userConfidentialFields
@@ -52,4 +52,4 @@ const meeting = [
     },
 ];
 
-export default { idea, project, presentation, meeting };
+export default { proposal, project, presentation, meeting };
