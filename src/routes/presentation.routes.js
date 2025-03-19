@@ -1,10 +1,10 @@
 import { Router } from "express";
 
 import presentationController from "../app/controllers/presentation.controller.js";
-import validateProgress from "../middlewares/validate/validate.presentation.js";
-import file from "../middlewares/file.js";
-import form from "../middlewares/form.js";
-import auth from "../middlewares/auth.js";
+import validateProgress from "../app/middlewares/validate/validate.presentation.js";
+import file from "../app/middlewares/file.js";
+import form from "../app/middlewares/form.js";
+import auth from "../app/middlewares/auth.js";
 
 const presentationRoutes = Router({ mergeParams: true });
 

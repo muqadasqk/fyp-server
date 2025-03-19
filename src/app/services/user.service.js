@@ -5,7 +5,7 @@ import calculatePaginationMetadata from '../../utils/libs/database/calculate.pag
 import user from '../models/user.js';
 import readDatabase from '../../utils/libs/database/read.database.js';
 import validateParameter from '../../utils/libs/helper/validate.parameter.js';
-import file from '../../middlewares/file.js';
+import file from '../middlewares/file.js';
 import validateMongooseObjectId from '../../utils/libs/database/validate.mongoose.object.id.js';
 
 // function to retrieve all user documents

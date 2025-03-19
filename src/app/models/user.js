@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import rules from '../../utils/libs/validation/rules.js';
 import { messages } from '../../utils/libs/validation/messages.js';
+import password from '../../utils/libs/helper/password.js';
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -26,18 +27,14 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
-        validate: {
-            validator: v => rules.password(v),
-            message: messages.password
-        },
+        required: true
     },
 
     nic: {
         type: String,
         unique: true,
         validate: {
-            validator: v => !v ?? rules.nic(v),
+            validator: v => !v || rules.nic(v),
             message: messages.nic.replace(':field', 'nic')
         },
         sparse: true,
@@ -47,7 +44,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         unique: true,
         validate: {
-            validator: v => !v ?? rules.rollNo(v),
+            validator: v => !v || rules.rollNo(v),
             message: messages.rollNo.replace(':field', 'roll no')
         },
         sparse: true,
@@ -55,7 +52,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['supervisor', 'student'],
+        enum: ['admin', 'supervisor', 'student'],
         default: 'supervisor',
     },
     image: {
@@ -66,7 +63,7 @@ const userSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['active', 'inactive', 'verificationPending'],
-        default: 'verification-pending'
+        default: 'verificationPending'
     },
     verifiedAt: {
         type: Date,
@@ -78,4 +75,16 @@ const userSchema = new mongoose.Schema({
     },
 }, { timestamps: true, versionKey: false });
 
-export default mongoose.model('User', userSchema);
+const user = mongoose.model('User', userSchema);
+user.on('index', async () => {
+    if (!await user.findOne({ email: "admin@fyp-ms.com" })) user.create({
+        name: "admin",
+        email: "admin@fyp-ms.com",
+        password: await password.createHash('admin'),
+        role: "admin",
+        status: "active",
+        verifiedAt: new Date()
+    });
+});
+
+export default user;  

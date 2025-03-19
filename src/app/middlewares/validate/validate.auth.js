@@ -1,8 +1,8 @@
-import tryCatch from "../../utils/libs/helper/try.catch.js";
-import validator from "../../utils/libs/validation/validator.js";
-import httpCode from "../../utils/constants/http.code.js";
-import userRole from "../../utils/constants/user.role.js";
-import toast from "../../utils/constants/toast.js";
+import tryCatch from "../../../utils/libs/helper/try.catch.js";
+import validator from "../../../utils/libs/validation/validator.js";
+import httpCode from "../../../utils/constants/http.code.js";
+import userRole from "../../../utils/constants/user.role.js";
+import toast from "../../../utils/constants/toast.js";
 import file from "../file.js";
 
 const signupForm = (req, res, next) => tryCatch(async () => {
@@ -50,21 +50,6 @@ const signinForm = async (req, res, next) => tryCatch(async () => {
     next();
 }, res);
 
-const adminSigninForm = async (req, res, next) => tryCatch(async () => {
-    // validate fields against rules
-    const { errors, validationFailed } = await validator(req.body, {
-        username: { required: true, string: true },
-        password: { required: true }
-    });
-
-    // send response of validation failure
-    if (validationFailed) {
-        return res.response(httpCode.INVALID_DATA, toast.VALIDATION.FAILS, { errors });
-    }
-
-    next();
-}, res);
-
 const resetPasswordForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { errors, validationFailed } = await validator(req.body, {
@@ -99,6 +84,7 @@ const sendOTPForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { errors, validationFailed } = await validator(req.body, {
         email: { required: true, email: true },
+        subject: { min: 5, max: 255 },
     });
 
     // send response of validation failure
@@ -109,4 +95,4 @@ const sendOTPForm = async (req, res, next) => tryCatch(async () => {
     next();
 }, res);
 
-export default { signupForm, signinForm, adminSigninForm, resetPasswordForm, verifyOTPForm, sendOTPForm };
+export default { signupForm, signinForm, resetPasswordForm, verifyOTPForm, sendOTPForm };

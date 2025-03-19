@@ -1,10 +1,10 @@
 import { Router } from "express";
 
 import proposalController from "../app/controllers/proposal.controller.js";
-import validateProposal from "../middlewares/validate/validate.proposal.js";
-import file from "../middlewares/file.js";
-import form from "../middlewares/form.js";
-import auth from "../middlewares/auth.js";
+import validateProposal from "../app/middlewares/validate/validate.proposal.js";
+import file from "../app/middlewares/file.js";
+import form from "../app/middlewares/form.js";
+import auth from "../app/middlewares/auth.js";
 
 const proposalRoutes = Router({ mergeParams: true });
 

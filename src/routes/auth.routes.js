@@ -1,9 +1,9 @@
 import { Router } from 'express'
 
 import authController from '../app/controllers/auth.controller.js';
-import validateAuth from '../middlewares/validate/validate.auth.js';
-import file from '../middlewares/file.js';
-import form from '../middlewares/form.js';
+import validateAuth from '../app/middlewares/validate/validate.auth.js';
+import file from '../app/middlewares/file.js';
+import form from '../app/middlewares/form.js';
 
 const authRoutes = Router({ mergeParams: true });
 
@@ -31,16 +31,8 @@ authRoutes.post('/signin',
     authController.signin  // attempt to signin user
 );
 
-// route to let admin get login
-authRoutes.post('/admin/signin',
-    file.none, // enable route to access request body fields
-    form.sanitize,  // middleware to sanitize input fields
-    validateAuth.adminSigninForm, // middleware to enforce certain validations on input fields
-    authController.adminSignin // attempt to authorize admin
-);
-
 // route to reset forgotten password
-authRoutes.patch('/reset-password/:token',
+authRoutes.patch('/reset-password',
     file.none,// enable route to access request body fields 
     form.sanitize,  // middleware to sanitize input fields
     validateAuth.resetPasswordForm, // middleware to enforce certain validations on input fields

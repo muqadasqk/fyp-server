@@ -13,7 +13,7 @@ const tryCatch = async (fn, res = null) => {
         if (env.app.debug === "true") {
             return res.response(httpCode.SERVER_ERROR, error.message, { stack: error.stack });
         }
-        return res.response(httpCode.SERVER_ERROR, toast.MISC.INTERNAL_ERROR, { error: error.message });
+        return res.response(error.status || error.statusCode || httpCode.INVALID_REQUEST, error.message ?? toast.MISC.INTERNAL_ERROR);
     }
 };
 

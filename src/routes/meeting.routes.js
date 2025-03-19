@@ -1,10 +1,10 @@
 import { Router } from "express";
 
 import meetingController from "../app/controllers/meeting.controller.js";
-import validateProgress from "../middlewares/validate/validate.meeting.js";
-import file from "../middlewares/file.js";
-import form from "../middlewares/form.js";
-import auth from "../middlewares/auth.js";
+import validateProgress from "../app/middlewares/validate/validate.meeting.js";
+import file from "../app/middlewares/file.js";
+import form from "../app/middlewares/form.js";
+import auth from "../app/middlewares/auth.js";
 
 const meetingRoutes = Router({ mergeParams: true });
 

@@ -5,8 +5,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-import httpCode from "../utils/constants/http.code.js";
-import tryCatch from "../utils/libs/helper/try.catch.js";
+import httpCode from "../../utils/constants/http.code.js";
+import tryCatch from "../../utils/libs/helper/try.catch.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -17,7 +17,7 @@ const upload = multer({
 
         // destination path where files will be uploaded
         destination: function (req, file, cb) {
-            const uploadPath = path.join(__dirname, '../../public/uploads');
+            const uploadPath = path.join(__dirname, '../../assets/uploads');
             cb(null, uploadPath);
         },
 
@@ -38,7 +38,7 @@ const save = (name) => (req, res, next) => tryCatch(() => {
     // another middleware to check if the file upload was successful
     uploadMiddleware(req, res, (error) => {
         // return back with server error response
-        if (error) return res.response(httpCode.SERVER_ERROR, `Error uploading ${name}`, { error });
+        if (error) return res.response(error.statusCode ?? httpCode.SERVER_ERROR, `Error uploading ${name}`, error);
 
         // once the file is uploaded 
         if (req.file) {
@@ -62,7 +62,7 @@ const save = (name) => (req, res, next) => tryCatch(() => {
 // method to delete uploaded file from public/uploaded
 const del = (name) => {
     // generate absolute path to located file
-    const filepath = path.join(__dirname, '../../public/uploads/', name);
+    const filepath = path.join(__dirname, '../../assets/uploads', name);
 
     // delete file if exists
     if (fs.existsSync(filepath)) tryCatch(() => {

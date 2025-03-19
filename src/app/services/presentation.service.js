@@ -6,7 +6,7 @@ import readDatabase from '../../utils/libs/database/read.database.js';
 import validateParameter from '../../utils/libs/helper/validate.parameter.js';
 import validateMongooseObjectId from '../../utils/libs/database/validate.mongoose.object.id.js';
 import presentation from '../models/presentation.js';
-import file from '../../middlewares/file.js';
+import file from '../middlewares/file.js';
 import userRole from '../../utils/constants/user.role.js';
 import projectService from './project.service.js';
 import project from '../models/project.js';

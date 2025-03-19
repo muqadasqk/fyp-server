@@ -1,5 +1,5 @@
 import sanitizeInput from "sanitize-html";
-import is from "../utils/libs/helper/is.js";
+import is from "../../utils/libs/helper/is.js";
 
 const sanitize = (req, _, next) => {
     if (is.object(req.body)) {

@@ -3,7 +3,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 export default Object.freeze({
     server: {
-        port: process.env.SERVER_PORT
+        port: process.env.SERVER_PORT,
+        origin: process.env.SERVER_ORIGIN
     },
 
     app: {

@@ -1,27 +1,27 @@
-import tryCatch from "../utils/libs/helper/try.catch.js";
-import validateAndDecodeToken from "../utils/libs/helper/validate.and.decode.token.js";
-import userService from "../app/services/user.service.js";
-import env from "../config/env.js";
-import httpCode from "../utils/constants/http.code.js";
-import status from "../utils/constants/status.js";
-import toast from "../utils/constants/toast.js";
-import userRole from "../utils/constants/user.role.js";
+import tryCatch from "../../utils/libs/helper/try.catch.js";
+import validateAndDecodeToken from "../../utils/libs/helper/validate.and.decode.token.js";
+import userService from "../../app/services/user.service.js";
+import env from "../../config/env.js";
+import httpCode from "../../utils/constants/http.code.js";
+import status from "../../utils/constants/status.js";
+import toast from "../../utils/constants/toast.js";
+import userRole from "../../utils/constants/user.role.js";
 
 // middleware to authenticate user using JWT token
 const authenticate = (req, res, next) => tryCatch(async () => {
     // verify token from request headers; extract user ID from JWT token payload
     const { _id } = await validateAndDecodeToken(req.headers.authorization);
 
-    // check is user ID is admin username; identify request user as an admin
-    if (_id === env.admin.username) {
-        // add user to request object (for admin)
-        req.user = {
-            name: env.admin.username,
-            role: userRole.ADMIN
-        }
+    // // check is user ID is admin username; identify request user as an admin
+    // if (_id === env.admin.username) {
+    //     // add user to request object (for admin)
+    //     req.user = {
+    //         name: env.admin.username,
+    //         role: userRole.ADMIN
+    //     }
 
-        return next();
-    };
+    //     return next();
+    // };
 
     // retrieve user by user ID extracted from JWT token payload 
     const user = await userService.retrieveOne({ _id });

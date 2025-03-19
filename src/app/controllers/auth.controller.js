@@ -109,39 +109,10 @@ const signin = (req, res) => tryCatch(async () => {
 }, res);
 
 
-// ADMIN SIGIN
-const adminSignin = (req, res) => tryCatch(async () => {
-  // retrieve admin login credentials from .env file
-  const admin = {
-    username: env.admin.username,
-    password: env.admin.password
-  };
-
-  // return back with access denied response whether admin username or password is invalid
-  if (admin.username !== req.body.username || !(await password.verify(req.body.password, admin.password))) {
-    return res.response(httpCode.ACCESS_DENIED, toast.AUTHENTICATION.ADMIN_FAILED);
-  }
-
-  // generate jwt token with admin username as user ID payload, expiring in 30 days
-  const token = jwt.sign({ _id: admin.username }, env.secret.key, {
-    expiresIn: '30d',
-  });
-
-  // admin records object to send in the response
-  // const admin = {
-  //   name: admin.username,
-  //   role: userRole.ADMIN
-  // }
-
-  // return back with success response containing token
-  return res.response(httpCode.SUCCESS, toast.AUTHENTICATION.GRANTED, { token });
-}, res);
-
-
 // RESET PASSWORD FOR SUPERVISOR AND STUDENT
 const resetPassword = (req, res) => tryCatch(async () => {
   // valiate and decode token
-  const { _id } = await validateAndDecodeToken(req.params.token);
+  const { _id } = await validateAndDecodeToken(req.headers["token"]);
 
   // retrieve user by user ID extracted from token; return back with user not found response if unavailable
   const user = await userService.retrieveOne({ _id });
@@ -191,14 +162,14 @@ const sendOTP = (req, res) => tryCatch(async () => {
   if (!user) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.ACCOUNT.INVALID);
 
   // generate random OTP of 6 digits
-  const generatedOTP = generateOtp(6);
+  const verificationOTP = generateOtp(6);
 
   // email options
   const options = {
     template: 'otp.email',
     user: user.name.capEach(),
-    subject: req.query.subject ?? 'OTP Verification',
-    otp: generatedOTP
+    subject: req.body.subject ?? 'OTP Verification',
+    otp: verificationOTP
   };
 
   // send email with OTP and check if it was sent othwerwise throw failed to send email error
@@ -207,7 +178,7 @@ const sendOTP = (req, res) => tryCatch(async () => {
   }
 
   // throw error when OTP storing was unsuccessfull
-  if (!(await userService.update({ _id: user._id }, { verificationOTP: generatedOTP }))) {
+  if (!(await userService.update({ _id: user._id }, { verificationOTP }))) {
     throw new Error(toast.MISC.INTERNAL_ERROR);
   }
 
@@ -216,4 +187,4 @@ const sendOTP = (req, res) => tryCatch(async () => {
 }, res);
 
 
-export default { signup, verifyEmail, signin, adminSignin, resetPassword, verifyOTP, sendOTP }
+export default { signup, verifyEmail, signin, resetPassword, verifyOTP, sendOTP }

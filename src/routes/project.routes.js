@@ -1,10 +1,10 @@
 import { Router } from "express";
 
 import projectController from "../app/controllers/project.controller.js";
-import validateProject from "../middlewares/validate/validate.project.js";
-import file from "../middlewares/file.js";
-import form from "../middlewares/form.js";
-import auth from "../middlewares/auth.js";
+import validateProject from "../app/middlewares/validate/validate.project.js";
+import file from "../app/middlewares/file.js";
+import form from "../app/middlewares/form.js";
+import auth from "../app/middlewares/auth.js";
 
 const projectRoutes = Router({ mergeParams: true });
 

@@ -6,7 +6,6 @@ import readDatabase from '../../utils/libs/database/read.database.js';
 import validateParameter from '../../utils/libs/helper/validate.parameter.js';
 import validateMongooseObjectId from '../../utils/libs/database/validate.mongoose.object.id.js';
 import proposal from '../models/proposal.js';
-import file from '../../middlewares/file.js';
 
 // function to retrieve all proposal documents
 const retrieveAll = async (options = {}, userQuery = null,) => {

@@ -16,7 +16,7 @@ const transporter = createTransport({
 // send email with certain credentials
 const send = async (email, options) => {
     return await transporter.sendMail({
-        from: env.email.user,
+        from: `"FYP Management System" ${env.email.user}`,
         to: email,
         subject: options.subject.capEach() ?? 'FYP Managemenr System',
         html: await getHtmlTempalate(options.template, options),
