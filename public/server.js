@@ -18,7 +18,7 @@ const app = express();
 
 // register application-level middlewares
 app.use(
-    cors({ origin: ["http://localhost:5173", "http://localhost:3000/", env.server.origin], credentials: true }),
+    cors({ origin: ["http://localhost:5173", "http://localhost:3000", env.server.origin], credentials: true }),
     helmet(), // security middleware
     express.json(), // parse JSON request bodies
     express.urlencoded({ extended: true }),
