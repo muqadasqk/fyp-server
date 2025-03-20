@@ -38,7 +38,6 @@ const userSchema = new mongoose.Schema({
             message: messages.nic.replace(':field', 'nic')
         },
         sparse: true,
-        default: null,
     },
     rollNo: {
         type: String,
@@ -48,7 +47,6 @@ const userSchema = new mongoose.Schema({
             message: messages.rollNo.replace(':field', 'roll no')
         },
         sparse: true,
-        default: null
     },
     role: {
         type: String,

@@ -17,7 +17,7 @@ export default Object.freeze({
     VALIDATION: {
         TAKEN: ({ key, value }) => `${key} '${value}' is already taken`,
         INVALID_ID: model => `Invalid ${model} ID`,
-        FAILS: 'Validation failed. Please check your inputs',
+        FAILS: 'Validation failed',
     },
 
     ACCOUNT: {
@@ -27,8 +27,8 @@ export default Object.freeze({
 
     AUTHENTICATION: {
         SUCCESS: 'Login successful',
-        FAILED: 'Invalid email or password. Please try again',
-        ADMIN_FAILED: 'Invalid username or password. Please try again',
+        FAILED: 'Invalid email or password',
+        ADMIN_FAILED: 'Invalid username or password',
         GRANTED: 'Admin authorization granted',
     },
 
@@ -38,14 +38,14 @@ export default Object.freeze({
 
     OTP: {
         SENT: 'OTP sent to your email',
-        FAILED: 'Failed to send OTP. Please try reseding',
-        VFAILED: 'Invalid OTP. Please try again',
+        FAILED: 'Failed to send OTP',
+        VFAILED: 'Invalid OTP',
         VSUCCESS: 'OTP verified successfully',
     },
 
     PASSWORD: {
         RESET_SUCCESS: 'Password reset successful',
-        RESET_FAILED: 'Password reset failed. Please try again',
+        RESET_FAILED: 'Password reset failed',
         UPDATE_SUCCESS: 'Password updated successfully',
         UPDATE_FAILED: 'The old password is incorrect',
     },
@@ -55,7 +55,7 @@ export default Object.freeze({
         DELETED_SUCCESS: 'User account deleted successfully',
         STATUS_UPDATED_SUCCESS: 'User status updated successfully',
         STATUS_UPDATE_FAIL: 'User status update failed',
-        REGISTRATION_FAILED: 'User registration failed. Please try again',
+        REGISTRATION_FAILED: 'User registration failed',
     },
 
     MISC: {
