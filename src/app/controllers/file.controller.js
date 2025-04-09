@@ -14,7 +14,7 @@ const serve = async (req, res) => {
 
     // return back with file not found if file is unavailable
     if (!fs.existsSync(filePath)) {
-        return res.response(404, "The file not found", { file });
+        return res.response(404, "The file not found", { file: `${directoryName}/${fileName}` });
     }
 
     // let user download/view file
