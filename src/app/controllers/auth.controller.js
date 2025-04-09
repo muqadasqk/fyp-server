@@ -1,190 +1,164 @@
-import jwt from 'jsonwebtoken';
-
 import tryCatch from '../../utils/libs/helper/try.catch.js';
+import filterRequestBody from "../../utils/libs/helper/filter.request.body.js";
 import userService from "../services/user.service.js";
-import password from "../../utils/libs/helper/password.js";
-import generateOtp from '../../utils/libs/helper/generate.otp.js';
-import httpCode from "../../utils/constants/http.code.js";
-import toast from "../../utils/constants/toast.js";
 import email from '../../utils/libs/helper/email.js';
-import status from "../../utils/constants/status.js";
 import validateAndDecodeToken from '../../utils/libs/helper/validate.and.decode.token.js';
-import env from "../../config/env.js";
-import buildMongoQuery from '../../utils/libs/database/build.mongo.query.js';
-
+import Verification from '../models/verification.model.js';
 
 // SIGNUP FOR SUPERVISOR AND STUDENT
 const signup = (req, res) => tryCatch(async () => {
-  // only fields that are allowed to be inserted
-  const fields = ['name', 'email', 'nic', 'rollNo', 'role', 'password', 'image'];
+    // only fields that are allowed to be inserted
+    const allowedFields = ["name", "email", "phone", "cnic", "rollNo", "role", "password", "image"];
 
-  // extacting only allowed fields from request body
-  const data = Object.fromEntries(
-    Object.entries(req.body).filter(([field, value]) => fields.includes(field) && value)
-  );
+    // extacting only allowed fields from request body
+    const data = filterRequestBody(req.body, allowedFields);
 
-  // create password hash and generate OTP
-  data.password = await password.createHash(data.password);
-  data.verificationOTP = generateOtp();
+    // attempt to create a new user; throw registration failed error if unsuccessful
+    if (!await userService.create(data)) throw new Error("The signup was failed");
 
-  // attempt to create a new user; throw registration failed error if unsuccessful
-  const user = await userService.create(data);
-  if (!user) throw new Error(toast.USER.REGISTRATION_FAILED);
+    // email options
+    const options = {
+        subject: "Signup Email Confirmation",
+        user: data.name.capEach(),
+        otp: await Verification.generate(data.email, 5),
+        template: "otp.email",
+    };
 
-  // email options
-  const options = {
-    template: 'otp.email',
-    user: user.name.cap(),
-    subject: 'Registration email verification',
-    otp: user.verificationOTP
-  };
+    // send email with OTP; throw failed to send email error when unsuccessful
+    // email.send(data.email, options);
+    if (!(await email.send(data.email, options))) {
+        await userService.delete(user._id);
+        throw new Error("Failed to send OTP code");
+    }
 
-  // send email with OTP; throw failed to send email error when unsuccessful
-  if (!(await email.send(user.email, options))) {
-    await userService.delete(user._id);
-    throw new Error(toast.OTP.FAILED);
-  }
-
-  // return back with success response
-  return res.response(httpCode.RESOURCE_CREATED, toast.OTP.SENT);
+    // return back with success response
+    return res.response(200, "The OTP code sent to your email");
 }, res);
 
 
-// VERIFY EMAIL ADDRESS
-const verifyEmail = (req, res) => tryCatch(async () => {
-  // retrieve user by email
-  const user = await userService.retrieveOne({ email: req.body.email });
+// CONFIRM EMAIL ADDRESS
+const confirmEmail = (req, res) => tryCatch(async () => {
+    // destructure request body
+    const { email, otp } = req.body;
 
-  // return back with failure response whether user is not found or OTP is invalid
-  if (!user || user.verificationOTP != req.body.otp) {
-    return res.response(httpCode.INVALID_DATA, toast.OTP.VFAILED);
-  }
+    // try verifying the otp
+    const { status, message } = await Verification.verify(email, otp, {
+        onSuccess: "Signup successfully", isSignupEmailConfirmation: true,
+    });
 
-  // data with fields that are to be updated
-  const data = {
-    status: status.INACTIVE,
-    verifiedAt: Date.now(),
-    verificationOTP: null
-  };
-
-  // throw error when update was unsuccessfull
-  if (!(await userService.update({ _id: user._id }, data))) {
-    throw new Error(toast.MISC.INTERNAL_ERROR);
-  }
-
-  // return back with success response
-  return res.response(httpCode.SUCCESS, toast.REGISTRATION.SUCCESS);
+    // return back with status and message
+    return res.response(status, message);
 }, res);
 
 
 // SIGIN FOR SUPERVISOR AND STUDENT
 const signin = (req, res) => tryCatch(async () => {
-  // retrieve user by email 
-  let user = await userService.retrieveOne(
-    buildMongoQuery({
-      fields: ['email', 'nic', 'rollNo'], value: req.body.username
-    })
-  );
+    // destructure request body
+    const { username, password } = req.body;
 
-  // return back with access denied response whether user is not found or password is invalid
-  if (!user || !(await password.verify(req.body.password, user.password))) {
-    return res.response(httpCode.ACCESS_DENIED, toast.AUTHENTICATION.FAILED);
-  }
+    // construct query to match any user
+    const query = { $or: [{ email: username }, { phone: username }, { cnic: username }, { rollNo: username }] }
 
-  // return back with access denied response if user status is not active
-  if (user.status != status.ACTIVE) {
-    return res.response(httpCode.ACCESS_DENIED, toast.ACCOUNT.NOT_ACTIVE);
-  }
+    // retrieve user by phone|email|nic|rollNo 
+    let user = await userService.retrieveOne(query, { withPassword: true });
 
-  // generate jwt token with user ID payload, expiring in 30 days
-  const token = jwt.sign({ _id: user._id }, env.secret.key, {
-    expiresIn: '30d',
-  });
+    // return back with access denied response whether user is not found or password is invalid
+    if (!user || !(await user.comparePassword(password))) {
+        return res.response(403, "Invalid username or password");
+    }
+    // return back with access denied response if user status is not active
+    if (user.status !== "active") {
+        return res.response(403, "Account is not active");
+    }
 
-  // omit sensitive fields (password, verificationOTP) from user record object
-  user = user.except(['password', 'verificationOTP'], true);
+    // generate jwt token with user ID payload, expiring in 7 days
+    const token = user.generateToken("7d");
 
-  // return back with success response containing user and token
-  return res.response(httpCode.SUCCESS, toast.AUTHENTICATION.SUCCESS, { user, token });
+    // return back with success response containing user and token
+    return res.response(200, "Signin successfully", { user, token });
 }, res);
 
 
 // RESET PASSWORD FOR SUPERVISOR AND STUDENT
 const resetPassword = (req, res) => tryCatch(async () => {
-  // valiate and decode token
-  const { _id } = await validateAndDecodeToken(req.headers["token"]);
+    // destructure request body
+    const { password } = req.body;
 
-  // retrieve user by user ID extracted from token; return back with user not found response if unavailable
-  const user = await userService.retrieveOne({ _id });
-  if (!user) return res.response(httpCode.ACCESS_DENIED, toast.MISC.ACCESS_DENIED);
+    // valiate and decode token
+    const { id } = await validateAndDecodeToken(req.headers.token);
 
-  // create password hash
-  const hash = await password.createHash(req.body.password);
+    // retrieve user by user ID extracted from token; return back with user not found response if unavailable
+    const user = await userService.retrieveOne({ _id: id });
+    if (!user) return res.response(403, "Unauthenticated");
 
-  // throw error when password reset was unsuccessfull
-  if (!(await userService.update({ _id: user._id }, { password: hash }))) {
-    throw new Error(toast.MISC.INTERNAL_ERROR);
-  }
+    // throw error when password reset was unsuccessfull
+    if (!(await userService.update({ _id: user._id }, { password }))) {
+        throw new Error("The internal server error");
+    }
 
-  // return back with success response
-  return res.response(httpCode.SUCCESS, toast.PASSWORD.RESET_SUCCESS);
+    // return back with success response
+    return res.response(200, "Password reset successfully");
 }, res);
 
 
 // VERIFY OTP
 const verifyOTP = (req, res) => tryCatch(async () => {
-  // retrieve user by email
-  const user = await userService.retrieveOne({ email: req.body.email });
+    // destructure request body
+    const { email, otp } = req.body;
 
-  // return back with failure response whether user is not found or OTP is invalid
-  if (!user || user.verificationOTP != req.body.otp) {
-    return res.response(httpCode.INVALID_DATA, toast.OTP.VFAILED);
-  }
+    // try verifying the otp
+    const { status, message } = await Verification.verify(email, otp, {
+        onSuccess: "The OTP code verified successfully"
+    });
 
-  // throw error when making verificationOTP null was unsuccessfull
-  if (!(await userService.update({ _id: user._id }, { verificationOTP: null }))) {
-    throw new Error(toast.MISC.INTERNAL_ERROR);
-  }
+    // return back with error status and message
+    if (status !== 200) return res.response(status, message);
 
-  // generate jwt token with user ID payload, expiring in 15 minutes
-  const token = jwt.sign({ _id: user._id }, env.secret.key, {
-    expiresIn: '900s',
-  });
+    // retrieve user by email 
+    const user = await userService.retrieveOne({ email });
+    if (!user) return re.response(404, "Failed to verify OTP code");
 
-  // return back with success response containing token
-  return res.response(httpCode.SUCCESS, toast.OTP.VSUCCESS, { token });
+    // generate jwt token with user ID payload, expiring in 15 minutes
+    const token = user.generateToken("900s");
+
+    // return back with success response containing token
+    return res.response(200, message, { token });
 }, res);
 
 // SENT OTP
 const sendOTP = (req, res) => tryCatch(async () => {
-  // retrieve user by email; return invalid account response if not found
-  let user = await userService.retrieveOne({ email: req.body.email });
-  if (!user) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.ACCOUNT.INVALID);
+    // destructure request body
+    const { email: otpEmail, subject, sendViaWhatsApp } = req.body;
 
-  // generate random OTP of 6 digits
-  const verificationOTP = generateOtp(6);
+    // retrieve user to check whether it exists or not
+    const user = await userService.retrieveOne({ email: otpEmail });
+    if (!user) return res.response(404, "No account match found");
 
-  // email options
-  const options = {
-    template: 'otp.email',
-    user: user.name.capEach(),
-    subject: req.body.subject ?? 'OTP Verification',
-    otp: verificationOTP
-  };
+    // generate random OTP of 6 digits
+    const generatedOtp = await Verification.generate(otpEmail, 5);
 
-  // send email with OTP and check if it was sent othwerwise throw failed to send email error
-  if (!(await email.send(user.email, options))) {
-    throw new Error(toast.OTP.FAILED);
-  }
+    // email options
+    const options = {
+        template: "otp.email",
+        user: user.name.capEach(),
+        subject: subject ?? "OTP Verification",
+        otp: generatedOtp
+    };
 
-  // throw error when OTP storing was unsuccessfull
-  if (!(await userService.update({ _id: user._id }, { verificationOTP }))) {
-    throw new Error(toast.MISC.INTERNAL_ERROR);
-  }
+    // send email with OTP and check if it was sent othwerwise throw failed to send email error
+    // email.send(otpEmail, options);
+    if (!(await email.send(otpEmail, options))) {
+        throw new Error("Failed to send OTP code");
+    }
 
-  // return back with success response
-  return res.response(httpCode.SUCCESS, toast.OTP.SENT);
+    // return back with success response
+    return res.response(200, "The OTP code sent to your email");
 }, res);
 
+// VERIFY TOKEN
+const verifyToken = (req, res) => tryCatch(async () => {
+    // return back with success response
+    return res.response(200, "Token verified", { user: req.user });
+}, res);
 
-export default { signup, verifyEmail, signin, resetPassword, verifyOTP, sendOTP }
+export default { signup, confirmEmail, signin, resetPassword, verifyOTP, sendOTP, verifyToken }

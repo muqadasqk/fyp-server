@@ -1,24 +1,42 @@
 import tryCatch from "../../../utils/libs/helper/try.catch.js";
 import validator from "../../../utils/libs/validation/validator.js";
-import httpCode from "../../../utils/constants/http.code.js";
-import toast from "../../../utils/constants/toast.js";
-import status from '../../../utils/constants/status.js';
-import types from '../../../utils/constants/type.js';
 
 const createForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { errors, validationFailed } = await validator(req.body, {
-        memberOne: { mongooseId: true, exists: { user: '_id' } },
-        memberTwo: { mongooseId: true, exists: { user: '_id' } },
-        title: { required: true, min: 3, max: 255, unique: { proposal: 'title' } },
-        abstract: { required: true, word: { min: 200, max: 350 } },
-        type: { required: true, in: [types.NEW, types.MODIFIED_OR_EXTENSION, types.RESEARCH_BASED] },
-        category: { required: true, string: true },
+        memberOne: {
+            mongooseId: true,
+            exclude: [req.user.id, req.body?.memberTwo],
+            exists: { user: '_id' }
+        },
+        memberTwo: {
+            mongooseId: true,
+            exclude: [req.user.id, req.body?.memberOne],
+            exists: { user: '_id' }
+        },
+        title: {
+            required: true,
+            min: 3,
+            max: 255,
+            unique: { proposal: 'title' }
+        },
+        abstract: {
+            required: true,
+            word: { min: 200, max: 350 }
+        },
+        type: {
+            required: true,
+            in: ["new", "modifiedOrExtension", "researchBased"]
+        },
+        category: {
+            required: true,
+            string: true
+        },
     });
 
     // send response of validation failure
     if (validationFailed) {
-        return res.response(httpCode.INVALID_DATA, toast.VALIDATION.FAILS, { errors });
+        return res.response(422, "There was a validation failure", { errors });
     }
 
     next();
@@ -27,13 +45,21 @@ const createForm = async (req, res, next) => tryCatch(async () => {
 const updateForm = async (req, res, next) => tryCatch(async () => {
     // validate fields against rules
     const { errors, validationFailed } = await validator(req.body, {
-        remarks: { word: { min: 5, max: 350 } },
-        status: { in: [status.ACCEPTED, status.CONDITIONALLY_ACCEPTED, status.REJECTED] },
+        supervisor: {
+            mongooseId: true,
+            exists: { user: '_id' }
+        },
+        remarks: {
+            word: { min: 5, max: 350 }
+        },
+        statusCode: {
+            in: [20001, 20002, 20003]
+        },
     });
 
     // send response of validation failure
     if (validationFailed) {
-        return res.response(httpCode.INVALID_DATA, toast.VALIDATION.FAILS, { errors });
+        return res.response(422, "There was a validation failure", { errors });
     }
 
     next();

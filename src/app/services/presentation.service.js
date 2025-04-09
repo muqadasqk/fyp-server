@@ -1,90 +1,86 @@
 import tryCatch from '../../utils/libs/helper/try.catch.js';
-import buildMongoQuery from '../../utils/libs/database/build.mongo.query.js';
 import populateOptions from '../../utils/constants/populate.options.js';
-import calculatePaginationMetadata from '../../utils/libs/database/calculate.pagination.metadata.js';
-import readDatabase from '../../utils/libs/database/read.database.js';
 import validateParameter from '../../utils/libs/helper/validate.parameter.js';
 import validateMongooseObjectId from '../../utils/libs/database/validate.mongoose.object.id.js';
-import presentation from '../models/presentation.js';
-import file from '../middlewares/file.js';
-import userRole from '../../utils/constants/user.role.js';
 import projectService from './project.service.js';
-import project from '../models/project.js';
+import Presentation from '../models/presentation.model.js';
+import constructQuery from '../../utils/libs/database/construct.query.js';
+import pagination from '../../utils/libs/database/pagination.js';
+import Project from '../models/project.model.js';
+import createMongooseObjectId from '../../utils/libs/database/create.mongoose.object.id.js';
 
 // function to retrieve all presentation documents
-const retrieveAll = async (options = {}, extra = {}) => {
-    // destructure parameter arguments
-    const { searchQuery, currentPage, documentCount } = options;
-    const { requestUser, userQuery } = extra;
+const retrieveAll = async (requestUser, { query = {}, current = 1, size = 10, sort = {} } = {}) => tryCatch(async () => {
+    // constuct the query to search on fields
+    const searchQuery = constructQuery(query, true);
 
-    // initialize query
-    let query = {};
+    // user related query construct
+    let userQuery = {};
+    switch (requestUser.role) {
+        case "supervisor": {
+            // retrieve all request supervisor projects
+            const projectIds = (await Project.find({ supervisor: requestUser._id })).map((project) => project?._id);
 
-    // create query to filter query documents
-    const filterQuery = buildMongoQuery({
-        value: searchQuery,
-        fields: ['summary', 'fyp', 'status', 'remarks']
-    });
+            // construct query of consiting request supervisor projects IDs
+            userQuery = { project: { $in: projectIds } }; break;
+        }
 
-    // role-based filtering
-    if (requestUser) {
-        switch (requestUser.role) {
-            case userRole.SUPERVISOR:
-                const projectIds = (await project.find({ supervisor: requestUser.id })).map(project => project?._id);
+        case "student": {
+            // convert ID string to mongoose ObjectId
+            const id = createMongooseObjectId(requestUser._id);
 
-                if (projectIds.length < 1) {
-                    return await tryCatch(async () => ({
-                        presentations: [],
-                        metadata: await calculatePaginationMetadata(presentation, {
-                            meta: { currentPage, documentCount, useDefault: true }
-                        })
-                    }));
-                }
-                query = { $and: [{ project: { $in: projectIds } }, filterQuery] }; break;
+            // construct the query to match proposal with any of the following fields
+            const refQuery = { $or: [{ lead: id }, { memberOne: id }, { memberTwo: id }] }
 
-            case userRole.STUDENT:
-                let studentQuery = buildMongoQuery({
-                    fields: ['lead', 'memberOne', 'memberTwo'],
-                    value: requestUser.id
-                }, { isObjectId: true });
-
-                studentQuery = { project: (await projectService.retrieveOne(studentQuery))?._id }
-                query = { $and: [studentQuery, filterQuery] }; break;
-
-            default: query = filterQuery;
+            // construct query of consiting request student project ID
+            userQuery = { project: (await projectService.retrieveOne(refQuery))?._id }; break;
         }
     }
 
-    // query filtering
-    if (userQuery) {
-        query = { $and: [userQuery, filterQuery] };
-    }
+    // constructor final query
+    const finalQuery = { $and: [userQuery, searchQuery] };
 
-    // retrieve presentation documents and pagination metadata
-    return await tryCatch(async () => {
-        // retrieve pagination metadata
-        const metadata = await calculatePaginationMetadata(presentation, {
-            query, meta: { currentPage, documentCount }
-        });
-
-        // retrieve presentation documents
-        const presentations = await readDatabase(presentation, {
-            query, meta: { currentPage, documentCount, populate: 'presentation' }
-        });
-
-        // return object containing document and pagination info
-        return { presentations, metadata };
+    // retrieve documents with pagination
+    return await pagination(Presentation, { query: finalQuery, current, size, sort }, {
+        populate: populateOptions.presentation
     });
-};
+});
+
+// function to retrieve all presentation documents related to specific reference
+const retrieveMany = async (refId, { query = {}, current = 1, size = 10, sort = {} } = {}) => tryCatch(async () => {
+    // constuct the query to search on fields
+    const searchQuery = constructQuery(query, true);
+
+    // constructor final query
+    const finalQuery = { $and: [{ project: createMongooseObjectId(refId) }, searchQuery] };
+
+    // retrieve documents with pagination
+    return await pagination(Presentation, { query: finalQuery, current, size, sort }, {
+        populate: populateOptions.presentation
+    });
+});
 
 // function to retrieve single specified presentation document
-const retrieveOne = async (query) => {
-    // validate query
-    validateParameter('object', query);
+const retrieveOne = async (queryId, extraQuery = null) => {
+    let query;
+    if (typeof queryId === "object") {
+        // extract query key
+        const key = Object.keys(queryId)[0]
+
+        // convert ID string to mongoose ObjectId
+        query = { [key]: createMongooseObjectId(queryId[key]) };
+    } else {
+        // convert ID string to mongoose ObjectId
+        query = { _id: createMongooseObjectId(queryId) };
+    }
+
+    // merging the queries
+    if (extraQuery) (query = { $and: [query, extraQuery] })
 
     // return retrieved presentation document or null
     return await tryCatch(() => {
-        return presentation.findOne(query).populate(populateOptions.presentation);
+        return Presentation.findOne(query)
+            .populate(populateOptions.presentation);
     });
 };
 
@@ -95,7 +91,8 @@ const create = async (data) => {
 
     // return newly created presentation document
     return await tryCatch(async () => {
-        return (await presentation.create(data)).populate(populateOptions.presentation);
+        return (await Presentation.create(data))
+            .populate(populateOptions.presentation);
     });
 };
 
@@ -104,37 +101,20 @@ const update = async (query, data) => {
     // validate query and data
     validateParameter('object', query, data);
 
-    // attempt to update and retrieve old document
-    const updated = await tryCatch(() => {
-        return presentation.findOneAndUpdate(query, data, { new: false }).populate(populateOptions.presentation);
+    // attempt to update and retrieve updated document
+    return await tryCatch(() => {
+        return Presentation.findOneAndUpdate(query, data, { new: true })
+            .populate(populateOptions.presentation);
     });
-
-    // delete old resource file if there was a new image uploaded 
-    if (updated && data.resource) {
-        file.delete(updated.resource);
-    }
-
-    // return old document before update was made
-    return updated;
 };
 
 // method to delete single specified presentation document
 const del = async (_id) => {
-    // validate id is a valid mongoose ID
-    validateMongooseObjectId(_id);
-
     // delete and retrieve deleted presentation document
-    const deleted = await tryCatch(() => {
-        return presentation.findByIdAndDelete(_id).populate(populateOptions.presentation);
+    return await tryCatch(() => {
+        return Presentation.findByIdAndDelete(_id)
+            .populate(populateOptions.presentation);
     });
-
-    // delete old proposal file when presentation document deletion was successful
-    if (deleted && deleted.resource) {
-        file.delete(deleted.resource);
-    }
-
-    // return deleted presentation document
-    return deleted;
 };
 
-export default { retrieveAll, retrieveOne, create, update, delete: del };
+export default { retrieveAll, retrieveMany, retrieveOne, create, update, delete: del };

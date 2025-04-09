@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+
 import rules from '../../utils/libs/validation/rules.js';
 import { messages } from '../../utils/libs/validation/messages.js';
 
-const meetingSchema = new mongoose.Schema({
+const MeetingSchema = new mongoose.Schema({
     project: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project',
@@ -42,11 +43,14 @@ const meetingSchema = new mongoose.Schema({
         default: null,
     },
 
-    status: {
-        type: String,
-        enum: ['scheduled', 'completed'],
-        default: 'scheduled',
+    // auto-delete meeting after 1 year
+    expiresAt: {
+        type: Date,
+        default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        index: { expires: 0 },
+        select: false,
     },
 }, { timestamps: true, versionKey: false });
 
-export default mongoose.model('Meeting', meetingSchema);
+const Meeting = mongoose.model('Meeting', MeetingSchema);
+export default Meeting;

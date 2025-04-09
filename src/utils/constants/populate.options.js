@@ -1,40 +1,20 @@
-// user confidentials fields
-const userConfidentialFields = '-password -verificationOTP';
-
 // project populate options
 const proposal = [
     {
         path: 'lead',
-        select: userConfidentialFields
     },
     {
         path: 'memberOne',
-        select: userConfidentialFields
     },
     {
         path: 'memberTwo',
-        select: userConfidentialFields
-    },
-];
-// project populate options
-const project = [
-    {
-        path: 'lead',
-        select: userConfidentialFields
-    },
-    {
-        path: 'memberOne',
-        select: userConfidentialFields
-    },
-    {
-        path: 'memberTwo',
-        select: userConfidentialFields
     },
     {
         path: 'supervisor',
-        select: userConfidentialFields
     },
 ];
+// project populate options
+const project = proposal;
 
 // presentation populate options
 const presentation = [
@@ -45,11 +25,6 @@ const presentation = [
 ];
 
 // meeting populate options
-const meeting = [
-    {
-        path: 'project',
-        populate: project,
-    },
-];
+const meeting = presentation;
 
 export default { proposal, project, presentation, meeting };

@@ -2,17 +2,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 export default Object.freeze({
-    server: {
-        port: process.env.SERVER_PORT,
-        origin: process.env.SERVER_ORIGIN
-    },
-
     app: {
-        debug: process.env.APP_DEBUG
-    },
-
-    document: {
-        count: process.env.DOCUMENT_COUNT
+        origin: process.env.APP_ORIGIN,
+        port: process.env.APP_PORT,
+        secretKey: process.env.APP_SECRET_KEY,
+        mode: process.env.APP_MODE,
     },
 
     db: {
@@ -21,19 +15,10 @@ export default Object.freeze({
         name: process.env.DB_NAME,
     },
 
-    secret: {
-        key: process.env.SECRET_KEY
-    },
-
-    admin: {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD
-    },
-
-    email: {
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+    mail: {
+        host: process.env.MAIL_HOST,
+        port: process.env.MAIL_PORT,
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
     },
 });

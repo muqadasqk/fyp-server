@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
+
 import rules from '../../utils/libs/validation/rules.js';
 
-const proposalSchema = new mongoose.Schema({
+const ProposalSchema = new mongoose.Schema({
     lead: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -13,6 +14,11 @@ const proposalSchema = new mongoose.Schema({
         default: null
     },
     memberTwo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    supervisor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
@@ -61,4 +67,5 @@ const proposalSchema = new mongoose.Schema({
     },
 }, { timestamps: true, versionKey: false });
 
-export default mongoose.model('Proposal', proposalSchema);
+const Proposal = mongoose.model('Proposal', ProposalSchema);
+export default Proposal;

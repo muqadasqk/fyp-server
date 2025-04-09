@@ -1,52 +1,36 @@
 import tryCatch from '../../utils/libs/helper/try.catch.js';
-import buildMongoQuery from '../../utils/libs/database/build.mongo.query.js';
 import populateOptions from '../../utils/constants/populate.options.js';
-import calculatePaginationMetadata from '../../utils/libs/database/calculate.pagination.metadata.js';
-import readDatabase from '../../utils/libs/database/read.database.js';
 import validateParameter from '../../utils/libs/helper/validate.parameter.js';
 import validateMongooseObjectId from '../../utils/libs/database/validate.mongoose.object.id.js';
-import proposal from '../models/proposal.js';
+import Proposal from '../models/proposal.model.js';
+import constructQuery from '../../utils/libs/database/construct.query.js';
+import pagination from '../../utils/libs/database/pagination.js';
+import createMongooseObjectId from '../../utils/libs/database/create.mongoose.object.id.js';
 
 // function to retrieve all proposal documents
-const retrieveAll = async (options = {}, userQuery = null,) => {
-    // destructure options
-    const { searchQuery, currentPage, documentCount } = options;
+const retrieveAll = async ({ query = {}, current = 1, size = 10, sort = {} } = {}) => tryCatch(async () => {
+    // constuct the query to search on fields
+    const searchQuery = constructQuery(query, true);
 
-    // create filter query
-    const filterQuery = buildMongoQuery({
-        value: searchQuery,
-        fields: ['title', 'abstract', 'type', 'category', 'status']
+    // retrieve documents with pagination
+    return await pagination(Proposal, { query: searchQuery, current, size, sort }, {
+        populate: populateOptions.proposal
     });
-
-    // merge queries to filterQuery documents
-    const query = userQuery ? { $and: [userQuery, filterQuery] } : filterQuery;
-
-    // retrieve user documents and pagination metadata
-    return await tryCatch(async () => {
-        // retrieve pagination metadata
-        const metadata = await calculatePaginationMetadata(proposal, {
-            query, meta: { currentPage, documentCount }
-        });
-
-        // retrieve user documents
-        const proposals = await readDatabase(proposal, {
-            query, meta: { currentPage, documentCount, populate: 'proposal' }
-        });
-
-        // return object containing document and pagination info
-        return { proposals, metadata };
-    });
-};
+});
 
 // function to retrieve single specified proposal document
-const retrieveOne = async (query) => {
-    // validate query
-    validateParameter('object', query);
+const retrieveOne = async (queryId) => {
+    // convert ID string to mongoose ObjectId
+    const id = createMongooseObjectId(queryId);
+
+    // construct the query to match proposal with any of the following fields
+    const query = {
+        $or: [{ _id: id }, { lead: id }, { memberOne: id }, { memberTwo: id }]
+    }
 
     // return retrieved proposal document or null
-    return await tryCatch(() => {
-        return proposal.findOne(query).populate(populateOptions.proposal);
-    });
+    return await tryCatch(() => Proposal.findOne(query)
+        .populate(populateOptions.proposal));
 };
 
 // function to create a new proposal document
@@ -56,7 +40,8 @@ const create = async (data) => {
 
     // return newly created proposal document
     return await tryCatch(async () => {
-        return (await proposal.create(data)).populate(populateOptions.proposal);
+        return (await Proposal.create(data))
+            .populate(populateOptions.proposal);
     });
 };
 
@@ -67,7 +52,8 @@ const update = async (query, data) => {
 
     // attempt to update and retrieve old document
     return await tryCatch(() => {
-        return proposal.findOneAndUpdate(query, data, { new: false }).populate(populateOptions.proposal);
+        return Proposal.findOneAndUpdate(query, data, { new: true })
+            .populate(populateOptions.proposal);
     });
 };
 
@@ -78,7 +64,8 @@ const del = async (id) => {
 
     // delete and retrieve deleted proposal document
     return await tryCatch(() => {
-        return proposal.findByIdAndDelete(id).populate(populateOptions.proposal);
+        return Proposal.findByIdAndDelete(id)
+            .populate(populateOptions.proposal);
     });
 };
 

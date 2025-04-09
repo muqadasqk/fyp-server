@@ -9,21 +9,23 @@ import auth from "../app/middlewares/auth.js";
 const proposalRoutes = Router({ mergeParams: true });
 
 // retrieve all proposal documents
-proposalRoutes.get('/',
+proposalRoutes.post('/all',
     auth.authenticate, // middleware to authenticate request user based on JWT token
+    auth.authorize("*"),  // middleware to authorize role(s) to access the route
     proposalController.index // controller method to retrieve all proposal docuements
 );
 
 // single proposal document against id
 proposalRoutes.get('/:proposalId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
+    auth.authorize("*"),  // middleware to authorize role(s) to access the route
     proposalController.show // controller method to retrieve specified proposal docuement
 );
 
 // create new proposal document
 proposalRoutes.post('/',
     auth.authenticate, // middleware to authenticate request user based on JWT token
-    auth.is.student, // ensure the request user is student
+    auth.authorize("student"),  // middleware to authorize role(s) to access the route
     file.none, // middleware to save resource file
     form.sanitize, // middleware to sanitize input fields
     validateProposal.createForm, // middleware to enforce certain validations on input fields
@@ -33,7 +35,7 @@ proposalRoutes.post('/',
 // update proposal document against id
 proposalRoutes.patch('/:proposalId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
-    auth.is.admin, // ensure the request user is admin
+    auth.authorize("admin"),  // middleware to authorize role(s) to access the route
     file.none, // middleware to save resource file
     form.sanitize,  // middleware to sanitize input fields
     validateProposal.updateForm, // middleware to enforce certain validations on input fields
@@ -43,7 +45,7 @@ proposalRoutes.patch('/:proposalId',
 // delete proposal document against id
 proposalRoutes.delete('/:proposalId',
     auth.authenticate, // middleware to authenticate request user based on JWT token
-    auth.is.admin, // middleware to ensure request user is not supervisor
+    auth.authorize("admin", "student"),  // middleware to authorize role(s) to access the route
     proposalController.delete // controller method to handle bussiness logic to update proposal document with certain fields
 );
 

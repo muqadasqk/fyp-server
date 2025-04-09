@@ -1,19 +1,16 @@
 import env from "../../../config/env.js";
-import httpCode from "../../constants/http.code.js";
-import toast from "../../constants/toast.js";
-import is from "./is.js";
 
 // function to execute block of code in try-catch exception handling
 const tryCatch = async (fn, res = null) => {
     try {
         return await fn();
     } catch (error) {
-        if (is.null(res)) throw error;
+        if (res === null) throw error;
 
-        if (env.app.debug === "true") {
-            return res.response(httpCode.SERVER_ERROR, error.message, { stack: error.stack });
+        if (env.app.mode === "development") {
+            return res.response(400, error.message, { stack: error.stack });
         }
-        return res.response(error.status || error.statusCode || httpCode.INVALID_REQUEST, error.message ?? toast.MISC.INTERNAL_ERROR);
+        return res.response(error.status || error.statusCode || 400, error.message ?? "There was an internal server error");
     }
 };
 

@@ -1,71 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= data.subject ?? 'Welcome to FYP Management System' %></title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #ffffff;
-            color: #212121;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #121212;
-                color: #ffffff;
-            }
-            .container {
-                border: 1px solid #28282B !important;
-            }
-        }
-    
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #dbdbdb;
-            border-radius: 10px;
-        }
-        
-        .header {
-            text-align: center;
-        }
-        
-        .content {
-            padding: 25px;
-        }
-        
-        .credentials p {
-            font-size: inherit; /* Inherit font size from parent element */
-            margin-bottom: 10px;
-        }
-        
-        .footer {
-            padding: 0 25px;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>FYP Management System</h2>
-        </div>
-        <div class="content">
-            <p>Dear <strong><%= data.user.name %></strong>,</p>
-            <p>Your account has been created, Here are Login credentials below</p>
-            <div class="credentials">
-                <p>Email: <%= data.user.email %></p>
-                <p>Password: <%= data.user.password %></p>
-            </div>
-            <p>Please note that it's recommended to change your password after the first login.</p>
-        </div>
-        <div class="footer">
-            <p>Best regards,</p>
-            <p>FYP Management System</p>
-        </div>
-    </div>
-</body>
-</html>
+<p><strong>Dear <%= data.user.name %></strong>,</p>
+
+<p>Your account has been created, Here are Login credentials below</p>
+<p><strong>Email:</strong> <%= data.user.email %></p>
+<p><strong>Password:</strong> <%= data.user.password %></p>
+
+<p>Please note that it's recommended to change your password after the first login.</p>
+
+<p>Best regards,<br>FYP Management System</p>

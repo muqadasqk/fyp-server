@@ -2,6 +2,8 @@ import '../src/utils/extensions/object.js';
 import '../src/utils/extensions/array.js';
 import '../src/utils/extensions/string.js';
 
+import '../src/utils/libs/helper/cron.js';
+
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -18,18 +20,18 @@ const app = express();
 
 // register application-level middlewares
 app.use(
-    cors({ origin: ["http://localhost:5173", "http://localhost:3000", env.server.origin], credentials: true }),
+    cors({ origin: ["http://localhost:5173", env.app.origin], credentials: true }),
     helmet(), // security middleware
-    express.json(), // parse JSON request bodies
+    express.json({ limit: "16kb" }), // parse JSON request bodies
     express.urlencoded({ extended: true }),
     morgan("dev"), // logs requests
-    rateLimit({
-        windowMs: 15 * 60 * 1000,
-        max: 100,
-        message: "Too many requests, Please try again later",
-        standardHeaders: true,
-        legacyHeaders: false,
-    }), // rate limiter middleware
+    // rateLimit({
+    //     windowMs: 15 * 60 * 1000,
+    //     max: 100,
+    //     message: "Too many requests, Please try again later",
+    //     standardHeaders: true,
+    //     legacyHeaders: false,
+    // }), // rate limiter middleware
     application.response, // custom response middleware
     application.errorHandler // custom error handler middleware
 );
@@ -50,8 +52,8 @@ app.use('/api', apiRoutes);
 
 // Ddatabase connection & server startup
 database.connect().then(() => {
-    app.listen(env.server.port, () => {
-        console.log(`Server is running on port ${env.server.port}`);
+    app.listen(env.app.port, () => {
+        console.log(`Server is running on port ${env.app.port}`);
     });
 }).catch((error) => {
     console.error("Database connection failed:", error);

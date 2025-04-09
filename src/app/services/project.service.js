@@ -1,53 +1,58 @@
 import tryCatch from '../../utils/libs/helper/try.catch.js';
-import buildMongoQuery from '../../utils/libs/database/build.mongo.query.js';
 import populateOptions from '../../utils/constants/populate.options.js';
-import calculatePaginationMetadata from '../../utils/libs/database/calculate.pagination.metadata.js';
-import readDatabase from '../../utils/libs/database/read.database.js';
 import validateParameter from '../../utils/libs/helper/validate.parameter.js';
 import validateMongooseObjectId from '../../utils/libs/database/validate.mongoose.object.id.js';
-import project from '../models/project.js';
-import file from '../middlewares/file.js';
+import Project from '../models/project.model.js';
+import constructQuery from '../../utils/libs/database/construct.query.js';
+import pagination from '../../utils/libs/database/pagination.js';
+import createMongooseObjectId from '../../utils/libs/database/create.mongoose.object.id.js';
 
 // function to retrieve all project documents
-const retrieveAll = async (options = {}, userQuery = null,) => {
-    // destructure options
-    const { searchQuery, currentPage, documentCount } = options;
+const retrieveAll = async ({ query = {}, current = 1, size = 10, sort = {} } = {}) => tryCatch(async () => {
+    // constuct the query to search on fields
+    const searchQuery = constructQuery(query, true);
 
-    // create filter query
-    const filterQuery = buildMongoQuery({
-        value: searchQuery,
-        fields: ['title', 'abstract', 'status']
+    // retrieve documents with pagination
+    return await pagination(Project, { query: searchQuery, current, size, sort }, {
+        populate: populateOptions.project
     });
+});
 
-    // merge queries to filterQuery documents
-    const query = userQuery ? { $and: [userQuery, filterQuery] } : filterQuery;
+// function to retrieve many project documents related to any query
+const retrieveMany = async (roleId, { query = {}, current = 1, size = 10, sort = {} } = {}) => tryCatch(async () => {
+    // constuct the query to search on fields
+    const searchQuery = constructQuery(query, true);
 
-    // retrieve user documents and pagination metadata
-    return await tryCatch(async () => {
-        // retrieve pagination metadata
-        const metadata = await calculatePaginationMetadata(project, {
-            query, meta: { currentPage, documentCount }
-        });
+    // merge queries to retrieve specified documents
+    const finalQuery = { $and: [{ supervisor: createMongooseObjectId(roleId) }, searchQuery] };
 
-        // retrieve user documents
-        const projects = await readDatabase(project, {
-            query, meta: { currentPage, documentCount, populate: 'project' }
-        });
-
-        // return object containing document and pagination info
-        return { projects, metadata };
+    // retrieve documents with pagination
+    return await pagination(Project, { query: finalQuery, current, size, sort }, {
+        populate: populateOptions.project
     });
-};
+});
 
 // function to retrieve single specified project document
-const retrieveOne = async (query) => {
-    // validate query
-    validateParameter('object', query);
+const retrieveOne = async (queryId) => {
+    let query;
+    if (typeof queryId === "object") {
+        // extract query key
+        const key = Object.keys(queryId)[0]
+
+        // convert ID string to mongoose ObjectId
+        query = { [key]: createMongooseObjectId(queryId[key]) };
+    } else {
+        // convert ID string to mongoose ObjectId
+        const id = createMongooseObjectId(queryId);
+
+        // construct the query to match proposal with any of the following fields
+        query = { $or: [{ _id: id }, { lead: id }, { memberOne: id }, { memberTwo: id }] }
+    }
 
     // return retrieved project document or null
-    return await tryCatch(() => {
-        return project.findOne(query).populate(populateOptions.project);
-    });
+    return await tryCatch(() => Project.findOne(query)
+        .populate(populateOptions.project)
+    );
 };
 
 // function to create a new project document
@@ -57,7 +62,8 @@ const create = async (data) => {
 
     // return newly created project document
     return await tryCatch(async () => {
-        return (await project.create(data)).populate(populateOptions.project);
+        return (await Project.create(data))
+            .populate(populateOptions.project);
     });
 };
 
@@ -66,18 +72,11 @@ const update = async (query, data) => {
     // validate query and data
     validateParameter('object', query, data);
 
-    // attempt to update and retrieve old document
-    const updated = await tryCatch(() => {
-        return project.findOneAndUpdate(query, data, { new: false }).populate(populateOptions.project);
+    // attempt to update and return updated document
+    return await tryCatch(() => {
+        return Project.findOneAndUpdate(query, data, { new: true })
+            .populate(populateOptions.project);
     });
-
-    // delete old proposal file if there was a new image uploaded 
-    if (updated?.proposal && data.proposal) {
-        file.delete(updated.proposal);
-    }
-
-    // return old document before update was made
-    return updated;
 };
 
 // method to delete single specified project document
@@ -85,18 +84,11 @@ const del = async (id) => {
     // validate id is a valid mongoose ID
     validateMongooseObjectId(id);
 
-    // delete and retrieve deleted project document
-    const deleted = await tryCatch(() => {
-        return project.findByIdAndDelete(id).populate(populateOptions.project);
+    // delete and return deleted project document
+    return await tryCatch(() => {
+        return Project.findByIdAndDelete(id)
+            .populate(populateOptions.project);
     });
-
-    // delete old proposal file when project document deletion was successful
-    if (deleted && deleted.proposal) {
-        file.delete(deleted.proposal);
-    }
-
-    // return deleted project document
-    return deleted;
 };
 
-export default { retrieveAll, retrieveOne, create, update, delete: del };
+export default { retrieveAll, retrieveMany, retrieveOne, create, update, delete: del };

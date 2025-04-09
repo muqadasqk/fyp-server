@@ -1,127 +1,100 @@
 import validateMongooseObjectId from "../../utils/libs/database/validate.mongoose.object.id.js";
-import buildMongoQuery from "../../utils/libs/database/build.mongo.query.js";
 import tryCatch from "../../utils/libs/helper/try.catch.js";
 import projectService from "../services/project.service.js";
-import httpCode from "../../utils/constants/http.code.js";
-import userRole from "../../utils/constants/user.role.js";
-import toast from "../../utils/constants/toast.js";
-import env from "../../config/env.js";
+import filterRequestBody from "../../utils/libs/helper/filter.request.body.js";
 
 // RETRIEVE ALL PROJECT DOCUMENTS
 const index = (req, res) => tryCatch(async () => {
-    // retrieve all project documents optionally with query and page related with certain limits
-    const data = await projectService.retrieveAll({
-        searchQuery: req.query.query ?? '', // query search parameter to filter project documents
-        currentPage: parseInt(req.query.page ?? 1), // page parameter to retrieve documents ahead of page count
-        documentCount: parseInt(req.query.limit ?? env.document.count) // rpp (records per-page) parameter to retrieve certain documents per page
-    });
+    // retrieve project documents
+    const data = await projectService.retrieveAll(req.body.page ?? {});
 
-    // return back with sucess response containg project documents
-    return res.response(httpCode.SUCCESS, toast.DATA.ALL('project'), data);
+    // return back with success response containing project documents
+    return res.response(200, "All project records", data);
 }, res);
 
 
 // RETRIEVE ALL SUPERVISOR RELATED PROJECTS
 const supervisorProjects = (req, res) => tryCatch(async () => {
+    // destructure request parameters
+    const { supervisorId } = req.params;
+
     // vaidate supervisor id
-    validateMongooseObjectId(req.params.supervisorId);
+    validateMongooseObjectId(supervisorId);
 
     // retrieve supervisor related project documents
-    const data = await projectService.retrieveAll(
-        {
-            searchQuery: req.query.query ?? '', // query search parameter to filter project documents
-            currentPage: parseInt(req.query.page ?? 1), // page parameter to retrieve documents ahead of page count
-            documentCount: parseInt(req.query.limit ?? env.document.count) // rpp (records per-page) parameter to retrieve certain documents per page
-        },
-        buildMongoQuery({
-            field: 'supervisor', value: req.params.supervisorId
-        }, { isObjectId: true })
-    );
+    const data = await projectService.retrieveMany(supervisorId, req.body.page ?? {});
 
     // return back with success response containg project document
-    return res.response(httpCode.SUCCESS, toast.DATA.ALL('supervisor project'), data);
+    return res.response(200, "All supervisor related project records", data);
 }, res);
 
 // RETRIEVE ONE SINGLE PROJECT DOCUMENT
 const show = (req, res) => tryCatch(async () => {
-    // vaidate parameter project id
-    validateMongooseObjectId(req.params.projectId);
+    // destructure request parameters
+    const { projectId } = req.params;
 
-    // build query to retrieve project document matching _id/lead/memberOne|Two
-    const query = buildMongoQuery({
-        fields: ['_id', 'lead', 'memberOne', 'memberTwo'],
-        value: req.params.projectId
-    }, { isObjectId: true })
+    // vaidate parameter project id
+    validateMongooseObjectId(projectId);
 
     // retrieve single specified project document
-    let project = await projectService.retrieveOne(query);
+    const project = await projectService.retrieveOne(projectId);
 
     // return back with project document not found response
-    if (!project) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.VALIDATION.INVALID_ID('project'))
+    if (!project) return res.response(404, "The project ID is invalid")
 
     // return back with success response containg project document
-    return res.response(httpCode.SUCCESS, toast.DATA.ONE('project'), { project });
+    return res.response(200, "Requested project record", { project });
 }, res);
 
 
 // CREATE A NEW PROJECT DOCUMENT
 const create = (req, res) => tryCatch(async () => {
     // only fields that are allowed to be inserted
-    const fields = ['lead', 'memberOne', 'memberTwo', 'supervisor', 'pid', 'title', 'abstract', 'type', 'category'];
+    const allowedFields = ['lead', 'memberOne', 'memberTwo', 'supervisor', 'pid', 'title', 'abstract', 'type', 'category'];
 
     // extacting only allowed fields from request body
-    const data = Object.fromEntries(
-        Object.entries(req.body).filter(([field, value]) => fields.includes(field) && value)
-    );
+    const data = filterRequestBody(req.body, allowedFields);
 
-    // query to match any project related with memberOne|Two
-    const query = (reference) => buildMongoQuery({
-        field: reference, value: data[reference]
-    }, { isObjectId: true });
-
-    // return back with forbidden request response when project found for lead
-    if (data.lead && await projectService.retrieveOne(query('lead'))) {
-        return res.response(httpCode.ACCESS_DENIED, toast.PROJECT.ASSIGNED('lead'));
-    }
-
-    // return back with forbidden request response when project found for memberOne
-    if (data.memberOne && await projectService.retrieveOne(query('memberOne'))) {
-        return res.response(httpCode.ACCESS_DENIED, toast.PROJECT.ASSIGNED('member one'));
-    }
-
-    // return back with forbidden request response when project found for memberOne
-    if (data.memberTwo && (await projectService.retrieveOne(query('memberTwo')))) {
-        return res.response(httpCode.ACCESS_DENIED, toast.PROJECT.ASSIGNED('member two'));
+    // retrieve project document agains reference id if exists, and return back with reference has an active project response
+    const refs = { lead: data?.lead, memberOne: data?.memberOne, memberTwo: data?.memberTwo };
+    for (const [key, value] of Object.entries(refs)) {
+        if (!value) continue; // don't look for the project where ref value doesn't exist
+        if (await projectService.retrieveOne({ [key]: value })) {
+            return res.response(400, `The ${key} has an active assigned project`);
+        }
     }
 
     // attempt to create a new project document; throw failed to create error if unsuccessful
     const project = await projectService.create(data);
-    if (!project) throw new Error(toast.DATA.FAILED('create', 'project'));
+    if (!project) throw new Error("Failed to initialize the project");
 
     // return back with success response containing newly created project document
-    return res.response(httpCode.RESOURCE_CREATED, toast.DATA.CREATED('project'), { project });
+    return res.response(200, "The project has been initialized", { project });
 }, res);
 
 
 // UDATE A PROJECT DOCUMENT BY ID WHEN REQUEST USER IS ADMIN/SUPERVISOR OTHERWISE BY LEAD/MEMBERONE/MEMBERTWO
 const update = (req, res) => tryCatch(async () => {
+    // destructure request parameters
+    const { projectId } = req.params;
+
     // vaidate parameter project id
-    validateMongooseObjectId(req.params.projectId);
+    validateMongooseObjectId(projectId);
 
     // retrieve specified project document
-    let project = await projectService.retrieveOne({ _id: req.params.projectId });
+    let project = await projectService.retrieveOne({ _id: projectId });
 
     // return back with project document not found response when document is unavailable
-    if (!project) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.VALIDATION.INVALID_ID('project'));
+    if (!project) return res.response(404, "The project ID is invalid");
 
     // fields allowed that can be replaced/null
     const referenceFields = ['lead', 'memberOne', 'memberTwo'];
 
     // initialize allowed fields array
-    let fields = [];
+    let allowedFields = [];
 
     // if the request user is lead/memberOne|Two
-    if (req.user.role === userRole.STUDENT) {
+    if (req.user.role === "student") {
         // retrieve student reference IDs
         const references = project.only(referenceFields, true);
 
@@ -131,85 +104,61 @@ const update = (req, res) => tryCatch(async () => {
         });
 
         // return back with access denied response when request user is not one of them (lead/memberOne|Two)
-        if (!requestUser) return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
+        if (!requestUser) return res.response(403, "Access forbidden");
 
         // set allowed fields for lead/memberOne|Two
-        fields = ['title', 'abstract', 'proposal', 'type', 'category'];
+        allowedFields = ['title', 'abstract', 'proposal', 'type', 'category'];
 
         // let project lead to add/remoce memberOne|Two
         if (requestUser === 'lead') {
-            fields.push('memberOne', 'memberTwo');
+            allowedFields.push('memberOne', 'memberTwo');
         }
     }
 
     // if the request user is supervisor
-    if (req.user.role === userRole.SUPERVISOR) {
+    if (req.user.role === "supervisor") {
         // return back with access denied response when request user is not project supervisor
         if (!project.supervisor || !project.supervisor._id.equals(req.user._id)) {
-            return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
+            return res.response(403, "Access forbidden");
         }
 
         // set allowed fields for project supervisor
-        fields = ['lead', 'memberOne', 'memberTwo', 'status'];
+        allowedFields = ['lead', 'memberOne', 'memberTwo', 'status'];
     }
 
     // it request user is admin add-on 
-    if (req.user.role === userRole.ADMIN) {
-        // set allowed fields for project supervisor
-        fields = ['lead', 'memberOne', 'memberTwo', 'supervisor', 'status'];
-
+    if (req.user.role === "admin") {
+        // set allowed fields for an admin
+        allowedFields = ['lead', 'memberOne', 'memberTwo', 'supervisor', 'status'];
         referenceFields.push('supervisor');
     }
 
     // retrieve only allowed fields from request body
-    const changes = Object.fromEntries(
-        Object.entries(req.body).filter(([field, value]) => {
-            return (value && fields.includes(field)) || (!value && referenceFields.includes(field));
-        })
-    );
+    const changes = filterRequestBody(req.body, allowedFields, { acceptNull: referenceFields });
 
-    // allow lead/memberOne|two and supervisor to be completely removed or replaced
-    referenceFields.map(field => {
-        if (changes.available(field, true)) {
-            changes[field] = null;
-        };
-    });
+    // // allow lead/memberOne|two and supervisor to be completely removed or replaced
+    referenceFields.forEach((field) => changes[field] === "" && (changes[field] = null));
 
     // update project document fields accordingly
-    await projectService.update({ _id: project._id }, changes);
-
-    // retrieve updated project document
-    project = await projectService.retrieveOne({ _id: project._id });
-
+    project = await projectService.update({ _id: project._id }, changes);
     // return back with success response containing update project document
-    return res.response(httpCode.SUCCESS, toast.DATA.UPDATED('project'), { project });
+    return res.response(200, "The project has been updated", { project });
 }, res);
 
 
 // DELETE PROJECT DOCUMENT 
 const del = (req, res) => tryCatch(async () => {
-    // validate project ID
-    // validateMongooseObjectId(req.params.projectId);
-
-    // if requet user is student
-    // if (req.user.role === userRole.STUDENT) {
-    //     // retrieve request user related project document when lead
-    //     const project = await projectService.retrieveOne({ lead: req.user._id });
-
-    //     // 'return back with access denied response; if project document not found
-    //     if (!project || String(project._id).equals(req.params.projectId)) {
-    //         return res.response(httpCode.ACCESS_DENIED, toast.MISC.FORBIDDEN);
-    //     }
-    // }
+    // destructure request parameters
+    const { projectId } = req.params;
 
     // attempt to delete single specified project document
-    const project = await projectService.delete(req.params.projectId);
+    const project = await projectService.delete(projectId);
 
     // return back with project document not found response when document is unavailable
-    if (!project) return res.response(httpCode.RESOURCE_NOT_FOUND, toast.VALIDATION.INVALID_ID('project'));
+    if (!project) return res.response(404, "The project ID is invalid");
 
     // return back with success response
-    return res.response(httpCode.SUCCESS, toast.DATA.DELETED('project'));
+    return res.response(200, "The project has been deleted");
 }, res);
 
 

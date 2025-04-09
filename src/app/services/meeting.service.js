@@ -1,91 +1,89 @@
 import tryCatch from '../../utils/libs/helper/try.catch.js';
-import buildMongoQuery from '../../utils/libs/database/build.mongo.query.js';
 import populateOptions from '../../utils/constants/populate.options.js';
-import calculatePaginationMetadata from '../../utils/libs/database/calculate.pagination.metadata.js';
-import readDatabase from '../../utils/libs/database/read.database.js';
 import validateParameter from '../../utils/libs/helper/validate.parameter.js';
 import validateMongooseObjectId from '../../utils/libs/database/validate.mongoose.object.id.js';
-import meeting from '../models/meeting.js';
-import userRole from '../../utils/constants/user.role.js';
 import projectService from './meeting.service.js';
-import project from '../models/project.js';
+import createMongooseObjectId from '../../utils/libs/database/create.mongoose.object.id.js';
+import pagination from '../../utils/libs/database/pagination.js';
+import Project from '../models/project.model.js';
+import constructQuery from '../../utils/libs/database/construct.query.js';
+import Meeting from '../models/meeting.model.js';
 
 // function to retrieve all meeting documents
-const retrieveAll = async (options = {}, extra = {}) => {
-    // destructure parameter arguments
-    const { searchQuery, currentPage, documentCount } = options;
-    const { requestUser, userQuery } = extra;
+const retrieveAll = async (requestUser, { query = {}, current = 1, size = 10, sort = {} } = {}) => tryCatch(async () => {
+    // constuct the query to search on fields
+    const searchQuery = constructQuery(query, true);
 
-    // initialize query
-    let query = {};
+    // user related query construct
+    let userQuery = {};
+    switch (requestUser.role) {
+        case "supervisor": {
+            // retrieve all request supervisor projects
+            const projectIds = (await Project.find({ supervisor: requestUser._id })).map((project) => project?._id);
 
-    // create filter
-    const filterQuery = buildMongoQuery({
-        value: searchQuery,
-        fields: ['summary', 'reference', 'status']
-    });
+            // construct query of consiting request supervisor projects IDs
+            userQuery = { project: { $in: projectIds } }; break;
+        }
 
-    // role-based query filtering 
-    if (requestUser) {
-        switch (requestUser.role) {
-            case userRole.SUPERVISOR:
-                const projectIds = (await project.find({ supervisor: requestUser.id })).map(project => project?._id);
+        case "student": {
+            // convert ID string to mongoose ObjectId
+            const id = createMongooseObjectId(requestUser._id);
 
-                if (projectIds.length < 1) {
-                    return await tryCatch(async () => ({
-                        meetings: [],
-                        metadata: await calculatePaginationMetadata(meeting, {
-                            meta: { currentPage, documentCount, useDefault: true }
-                        })
-                    }));
-                }
-                query = { $and: [{ project: { $in: projectIds } }, filterQuery] }; break;
+            // construct the query to match proposal with any of the following fields
+            const refQuery = { $or: [{ lead: id }, { memberOne: id }, { memberTwo: id }] }
 
-            case userRole.STUDENT:
-                let studentQuery = buildMongoQuery({
-                    fields: ['lead', 'memberOne', 'memberTwo'],
-                    value: requestUser.id
-                }, { isObjectId: true });
-
-                studentQuery = { meeting: (await projectService.retrieveOne(studentQuery))?._id }
-                query = { $and: [studentQuery, filterQuery] }; break;
-
-            default: query = filterQuery;
+            // construct query of consiting request student project ID
+            userQuery = { project: (await projectService.retrieveOne(refQuery))?._id }; break;
         }
     }
 
-    // query filtering
-    if (userQuery) {
-        query = { $and: [userQuery, filterQuery] };
-    }
+    // constructor final query
+    const finalQuery = { $and: [userQuery, searchQuery] };
 
-    // retrieve meeting documents and pagination metadata
-    return await tryCatch(async () => {
-        // retrieve pagination metadata
-        const metadata = await calculatePaginationMetadata(meeting, {
-            query, meta: { currentPage, documentCount }
-        });
-
-        // retrieve meeting documents
-        const meetings = await readDatabase(meeting, {
-            query, meta: { currentPage, documentCount, populate: 'meeting' }
-        });
-
-        // return object containing document and pagination info
-        return { meetings, metadata };
+    // retrieve documents with pagination
+    return await pagination(Meeting, { query: finalQuery, current, size, sort }, {
+        populate: populateOptions.meeting
     });
-};
+});
+
+// function to retrieve all meeting documents related to specific reference
+const retrieveMany = async (refId, { query = {}, current = 1, size = 10, sort = {} } = {}) => tryCatch(async () => {
+    // constuct the query to search on fields
+    const searchQuery = constructQuery(query, true);
+
+    // constructor final query
+    const finalQuery = { $and: [{ project: createMongooseObjectId(refId) }, searchQuery] };
+
+    // retrieve documents with pagination
+    return await pagination(Meeting, { query: finalQuery, current, size, sort }, {
+        populate: populateOptions.meeting
+    });
+});
 
 // function to retrieve single specified meeting document
-const retrieveOne = async (query) => {
-    // validate query
-    validateParameter('object', query);
+const retrieveOne = async (queryId, extraQuery = null) => {
+    let query;
+    if (typeof queryId === "object") {
+        // extract query key
+        const key = Object.keys(queryId)[0]
 
-    // return retrieved meeting document or null
+        // convert ID string to mongoose ObjectId
+        query = { [key]: createMongooseObjectId(queryId[key]) };
+    } else {
+        // convert ID string to mongoose ObjectId
+        query = { _id: createMongooseObjectId(queryId) };
+    }
+
+    // merging the queries
+    if (extraQuery) (query = { $and: [query, extraQuery] })
+
+    // return retrieved presentation document or null
     return await tryCatch(() => {
-        return meeting.findOne(query).populate(populateOptions.meeting);
+        return Meeting.findOne(query)
+            .populate(populateOptions.presentation);
     });
 };
+
 
 // function to create a new meeting document
 const create = async (data) => {
@@ -94,30 +92,36 @@ const create = async (data) => {
 
     // return newly created meeting document
     return await tryCatch(async () => {
-        return (await meeting.create(data)).populate(populateOptions.meeting);
+        return (await Meeting.create(data))
+            .populate(populateOptions.meeting);
     });
 };
 
 // function to update specified meeting document
-const update = async (query, data) => {
+const update = async (meetingId, data) => {
+    // construct query 
+    const query = { _id: createMongooseObjectId(meetingId) };
+
     // validate query and data
-    validateParameter('object', query, data);
+    validateParameter('object', data);
 
     // attempt to update and return old document
     return await tryCatch(() => {
-        return meeting.findOneAndUpdate(query, data, { new: false }).populate(populateOptions.meeting);
+        return Meeting.findOneAndUpdate(query, data, { new: true })
+            .populate(populateOptions.meeting);
     });
 };
 
 // method to delete single specified meeting document
-const del = async (_id) => {
+const del = async (meetingId) => {
     // validate id is a valid mongoose ID
-    validateMongooseObjectId(_id);
+    validateMongooseObjectId(meetingId);
 
     // delete and return deleted meeting document
     return await tryCatch(() => {
-        return meeting.findByIdAndDelete(_id).populate(populateOptions.meeting);
+        return Meeting.findByIdAndDelete(meetingId)
+            .populate(populateOptions.meeting);
     });
 };
 
-export default { retrieveAll, retrieveOne, create, update, delete: del };
+export default { retrieveAll, retrieveMany, retrieveOne, create, update, delete: del };

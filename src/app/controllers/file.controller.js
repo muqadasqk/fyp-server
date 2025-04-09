@@ -6,11 +6,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // SERVER PRIVATELY STORED FILES
 const serve = async (req, res) => {
-    // file name
-    const file = req.params.fileName;
+    // request params destructuring
+    const { directoryName, fileName } = req.params;
 
     // join the file name with the directory where files are stored
-    const filePath = path.join(__dirname, '../../assets/uploads', file);
+    const filePath = path.join(__dirname, '../../assets', `${directoryName}/${fileName}`);
 
     // return back with file not found if file is unavailable
     if (!fs.existsSync(filePath)) {

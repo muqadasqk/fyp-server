@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
-import rules from '../../utils/libs/validation/rules.js';
 
-const presentationSchema = new mongoose.Schema({
+import rules from '../../utils/libs/validation/rules.js';
+import file from '../middlewares/file.js';
+
+const PresentationSchema = new mongoose.Schema({
     project: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project',
@@ -38,8 +40,32 @@ const presentationSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['submitted', 'pendingReview', 'reviewed', 'rejected'],
-        default: 'pending-review',
+        default: 'pendingReview',
+    },
+
+    // auto-delete presentation after 1 year
+    expiresAt: {
+        type: Date,
+        default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        select: false,
     },
 }, { timestamps: true, versionKey: false });
 
-export default mongoose.model('Presentation', presentationSchema);
+// extra methods
+PresentationSchema.pre('findOneAndUpdate', async function (next) {
+    const update = this.getUpdate();
+    if (update.resource) {
+        const doc = await this.model.findOne(this.getFilter());
+        if (doc && doc.resource) file.delete(doc.resource)
+    }
+    next();
+});
+
+PresentationSchema.pre('findOneAndDelete', async function (next) {
+    const presentation = await this.model.findOne(this.getQuery());
+    if (presentation && presentation.resource) file.delete(presentation.resource);
+    next();
+});
+
+const Presentation = mongoose.model('Presentation', PresentationSchema);
+export default Presentation;

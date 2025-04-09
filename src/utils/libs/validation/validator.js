@@ -7,13 +7,19 @@ export default async (data, rules) => {
 
     // iterate over every field 
     for (const field in rules) {
+
         // corresponding field value from data
-        const value = data[field];
+        let value = data[field];
 
         // iterate over each validation rule to certain field
         for (const [rule, ruleValue] of Object.entries(rules[field])) {
+
+            // proceed optional 
+            if (rule === "optional" && ruleValue && !value) continue;
+
             // apply rule check push error if rule fails
-            if ((rule == 'required' && !value) || (!errors[field] && value && !(await Rules[rule](value, ruleValue)))) {
+            if ((rule == "required" && !value) || (!errors[field] && value && !(await Rules[rule](value, ruleValue)))) {
+
                 // retrieve certain rule failure message string
                 errors[field] = await validationMessage(rule, { field, value, [rule]: ruleValue, });
             }
